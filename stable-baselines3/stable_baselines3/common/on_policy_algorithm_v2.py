@@ -124,19 +124,15 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         self.Target_move_out_origin = copy.deepcopy(self.Target_move_out)
         self.Target_move_in_origin = copy.deepcopy(self.Target_move_in)
 
-        self.Move_in_tensor_N_demand = th.tensor(self.Target_move_in['N_demand'], dtype=th.float64).to(self.device)
         self.Move_in_tensor_ammonia_density = th.tensor(self.Target_move_in['ammonia_density'], dtype=th.float64).to(self.device)
         self.Move_in_tensor_livestock_PB = th.tensor(self.Target_move_in['livestock_PB'], dtype=th.float64).to(self.device)
 
-        self.Move_out_tensor_N_demand = th.tensor(self.Target_move_out['N_demand'], dtype=th.float64).to(self.device)
         self.Move_out_tensor_ammonia_density = th.tensor(self.Target_move_out['ammonia_density'], dtype=th.float64).to(self.device)
         self.Move_out_tensor_livestock_PB = th.tensor(self.Target_move_out['livestock_PB'], dtype=th.float64).to(self.device)
 
-        self.N_demand_coef_move_in = self.env.get_attr('Move_in_tensor_Coef_N_demand',0)[0]
         self.ammonia_density_coef_move_in = self.env.get_attr('Move_in_tensor_Coef_ammonia_density',0)[0]
         self.livestock_PB_coef_move_in = self.env.get_attr('Move_in_tensor_Coef_livestock_PB',0)[0]
         
-        self.N_demand_coef_move_out = self.env.get_attr('Move_out_tensor_Coef_N_demand',0)[0]
         self.ammonia_density_coef_move_out = self.env.get_attr('Move_out_tensor_Coef_ammonia_density',0)[0]
         self.livestock_PB_coef_move_out = self.env.get_attr('Move_out_tensor_Coef_livestock_PB',0)[0]
 
@@ -196,35 +192,31 @@ class OnPolicyAlgorithm(BaseAlgorithm):
     def detect_violation_move_out(self, move_out_idx):
         # 移出县三者均需小于等于阈值 最大满足
         empty_violation = (self.Move_out.iloc[move_out_idx, :] == 0).all()
-        N_demand_violation = self.Move_out_tensor_N_demand[move_out_idx] < self.thresholds[0] + self.N_demand_coef_move_out[move_out_idx].min()
-        ammonia_density_violation = self.Move_out_tensor_ammonia_density[move_out_idx] < self.thresholds[1] + self.ammonia_density_coef_move_out[move_out_idx].min()
-        livestock_PB_violation = self.Move_out_tensor_livestock_PB[move_out_idx] < self.thresholds[2] + self.livestock_PB_coef_move_out[move_out_idx].min()
+
+        ammonia_density_violation = self.Move_out_tensor_ammonia_density[move_out_idx] < self.thresholds[0] + self.ammonia_density_coef_move_out[move_out_idx].min()
+        livestock_PB_violation = self.Move_out_tensor_livestock_PB[move_out_idx] < self.thresholds[1] + self.livestock_PB_coef_move_out[move_out_idx].min()
         
         if empty_violation:
             return th.ones(self.num_move_in_counties) 
         elif self.ammonia_density_case(self.Target_move_out_origin['ammonia_density'][move_out_idx]):
             return th.zeros(self.num_move_in_counties)
-        elif N_demand_violation and ammonia_density_violation and livestock_PB_violation:
+        elif ammonia_density_violation and livestock_PB_violation:
             return th.ones(self.num_move_in_counties) 
         else: 
             return th.zeros(self.num_move_in_counties)
 
     def detect_violation_move_in(self, move_in_idx):
         # 移入县三者满足其一 最小满足
-        N_demand_violation = self.Move_in_tensor_N_demand[move_in_idx] > self.thresholds[0] - self.N_demand_coef_move_in[move_in_idx].min()
-        ammonia_density_violation = self.Move_in_tensor_ammonia_density[move_in_idx] > self.thresholds[1] - self.ammonia_density_coef_move_in[move_in_idx].min()
-        livestock_PB_violation = self.Move_in_tensor_livestock_PB[move_in_idx] > self.thresholds[2] - self.livestock_PB_coef_move_in[move_in_idx].min()
+        ammonia_density_violation = self.Move_in_tensor_ammonia_density[move_in_idx] > self.thresholds[0] - self.ammonia_density_coef_move_in[move_in_idx].min()
+        livestock_PB_violation = self.Move_in_tensor_livestock_PB[move_in_idx] > self.thresholds[1] - self.livestock_PB_coef_move_in[move_in_idx].min()
         
-        return th.ones(self.num_move_out_counties) if (N_demand_violation or ammonia_density_violation or livestock_PB_violation) else th.zeros(self.num_move_out_counties)
+        return th.ones(self.num_move_out_counties) if (ammonia_density_violation or livestock_PB_violation) else th.zeros(self.num_move_out_counties)
 
     def update_Move_df(self, move_in_idx, move_out_idx, amounts):
             
         self.Move_in.iloc[move_in_idx, :] += amounts.cpu().numpy()
         self.Move_out.iloc[move_out_idx, :] -= amounts.cpu().numpy()
-
-        self.Move_in_tensor_N_demand[move_in_idx] += (amounts.double() @ self.N_demand_coef_move_in[move_in_idx]).item()
-        self.Move_out_tensor_N_demand[move_out_idx] -= (amounts.double() @ self.N_demand_coef_move_out[move_out_idx]).item()
-        
+      
         self.Move_in_tensor_ammonia_density[move_in_idx] += (amounts.double() @ self.ammonia_density_coef_move_in[move_in_idx]).item()
         self.Move_out_tensor_ammonia_density[move_out_idx] -=(amounts.double() @ self.ammonia_density_coef_move_out[move_out_idx]).item()
         
@@ -237,19 +229,17 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         Amounts_violation = (cur_amounts < amounts.cpu().numpy()).any()
         empty_violation = (cur_amounts == 0).all() or (amounts == 0).all()
 
-        N_demand_violation_move_out = self.Move_out_tensor_N_demand[move_out_idx] < self.thresholds[0] + amounts.double() @ self.N_demand_coef_move_out[move_out_idx]
-        ammonia_density_violation_move_out = self.Move_out_tensor_ammonia_density[move_out_idx] < self.thresholds[1] + amounts.double() @ self.ammonia_density_coef_move_out[move_out_idx]
-        livestock_PB_violation_move_out = self.Move_out_tensor_livestock_PB[move_out_idx] < self.thresholds[2] + amounts.double() @ self.livestock_PB_coef_move_out[move_out_idx]
+        ammonia_density_violation_move_out = self.Move_out_tensor_ammonia_density[move_out_idx] < self.thresholds[0] + amounts.double() @ self.ammonia_density_coef_move_out[move_out_idx]
+        livestock_PB_violation_move_out = self.Move_out_tensor_livestock_PB[move_out_idx] < self.thresholds[1] + amounts.double() @ self.livestock_PB_coef_move_out[move_out_idx]
         
-        N_demand_violation_move_in = self.Move_in_tensor_N_demand[move_in_idx] > self.thresholds[0] - amounts.double() @ self.N_demand_coef_move_in[move_in_idx]
-        ammonia_density_violation_move_in = self.Move_in_tensor_ammonia_density[move_in_idx] > self.thresholds[1] - amounts.double() @ self.ammonia_density_coef_move_in[move_in_idx]
-        livestock_PB_violation_move_in = self.Move_in_tensor_livestock_PB[move_in_idx] > self.thresholds[2] - amounts.double() @ self.livestock_PB_coef_move_in[move_in_idx]
+        ammonia_density_violation_move_in = self.Move_in_tensor_ammonia_density[move_in_idx] > self.thresholds[0] - amounts.double() @ self.ammonia_density_coef_move_in[move_in_idx]
+        livestock_PB_violation_move_in = self.Move_in_tensor_livestock_PB[move_in_idx] > self.thresholds[1] - amounts.double() @ self.livestock_PB_coef_move_in[move_in_idx]
 
         
         return empty_violation,\
                 Amounts_violation,\
-                (N_demand_violation_move_in or ammonia_density_violation_move_in or livestock_PB_violation_move_in),\
-                (N_demand_violation_move_out and ammonia_density_violation_move_out and livestock_PB_violation_move_out)
+                (ammonia_density_violation_move_in or livestock_PB_violation_move_in),\
+                (ammonia_density_violation_move_out and livestock_PB_violation_move_out)
 
     def reset_action_mask(self):
         return th.zeros((self.num_move_out_counties, self.num_move_in_counties),dtype=bool).to(self.device)
@@ -264,29 +254,25 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         if not True in self.detect_violation(move_out_idx, move_in_idx, amounts):
             return amounts
 
-        N_demand_coef_in = self.N_demand_coef_move_in[move_in_idx].cpu().numpy()
         ammonia_density_coef_in = self.ammonia_density_coef_move_in[move_in_idx].cpu().numpy()
         livestock_PB_coef_in = self.livestock_PB_coef_move_in[move_in_idx].cpu().numpy()
 
-        N_demand_coef_out = self.N_demand_coef_move_out[move_out_idx].cpu().numpy()
         ammonia_density_coef_out = self.ammonia_density_coef_move_out[move_out_idx].cpu().numpy()
         livestock_PB_coef_out = self.livestock_PB_coef_move_out[move_out_idx].cpu().numpy()
 
         c = -np.ones(amounts.shape[0])  # Coefficients for the linear objective function
         cur_amounts = self.Move_out.iloc[move_out_idx, :]
         bounds = [(0, min(amounts[i].item(), cur_amounts.iloc[i])) for i in range(len(cur_amounts))]
-        cur = th.tensor([self.Move_in_tensor_N_demand[move_in_idx],
-                         self.Move_in_tensor_ammonia_density[move_in_idx],
+        cur = th.tensor([self.Move_in_tensor_ammonia_density[move_in_idx],
                          self.Move_in_tensor_livestock_PB[move_in_idx],
-                         self.Move_out_tensor_N_demand[move_out_idx],
                          self.Move_out_tensor_ammonia_density[move_out_idx],
                          self.Move_out_tensor_livestock_PB[move_out_idx]]).cpu().numpy().reshape(-1, 1)
 
-        A_ub = np.array([N_demand_coef_in, ammonia_density_coef_in, livestock_PB_coef_in,
-                         N_demand_coef_out, ammonia_density_coef_out, livestock_PB_coef_out])
+        A_ub = np.array([ammonia_density_coef_in, livestock_PB_coef_in,
+                         ammonia_density_coef_out, livestock_PB_coef_out])
         
-        b_ub_in = np.array([self.thresholds]).reshape(-1, 1) - cur[:3]
-        b_ub_out = cur[3:] - np.array([self.thresholds]).reshape(-1, 1)
+        b_ub_in = np.array([self.thresholds]).reshape(-1, 1) - cur[:2]
+        b_ub_out = cur[2:] - np.array([self.thresholds]).reshape(-1, 1)
         b_ub = np.concatenate((b_ub_in, b_ub_out), axis=0).reshape(-1, 1)
 
         idxs = b_ub < 0
@@ -424,11 +410,9 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
 
                     self.Target_move_in, self.Target_move_out = copy.deepcopy(self.Target_move_in_origin), copy.deepcopy(self.Target_move_out_origin)
-                    self.Move_in_tensor_N_demand = th.tensor(self.Target_move_in['N_demand'], dtype=th.float64).to(self.device)
                     self.Move_in_tensor_ammonia_density = th.tensor(self.Target_move_in['ammonia_density'], dtype=th.float64).to(self.device)
                     self.Move_in_tensor_livestock_PB = th.tensor(self.Target_move_in['livestock_PB'], dtype=th.float64).to(self.device)
 
-                    self.Move_out_tensor_N_demand = th.tensor(self.Target_move_out['N_demand'], dtype=th.float64).to(self.device)
                     self.Move_out_tensor_ammonia_density = th.tensor(self.Target_move_out['ammonia_density'], dtype=th.float64).to(self.device)
                     self.Move_out_tensor_livestock_PB = th.tensor(self.Target_move_out['livestock_PB'], dtype=th.float64).to(self.device)
 

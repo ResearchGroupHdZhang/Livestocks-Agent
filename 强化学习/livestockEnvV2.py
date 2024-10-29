@@ -56,8 +56,8 @@ class LivestockEnv(gym.Env):
         self.observation_space = spaces.Dict({
             'Amount_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, self.Move_in.shape[1]), dtype=np.int64),
             'Amount_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, self.Move_out.shape[1]), dtype=np.int64),
-            'N_demand_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
-            'N_demand_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
+            # 'N_demand_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
+            # 'N_demand_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
             'ammonia_density_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
             'ammonia_density_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
             'livestock_PB_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
@@ -68,23 +68,23 @@ class LivestockEnv(gym.Env):
             'relative_pm25_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
         })
                 
-        self.Move_in_tensor_N_demand = torch.tensor(self.Target_move_in['N_demand'], dtype=torch.float64).to(self.device)
+        # self.Move_in_tensor_N_demand = torch.tensor(self.Target_move_in['N_demand'], dtype=torch.float64).to(self.device)
         self.Move_in_tensor_ammonia_density = torch.tensor(self.Target_move_in['ammonia_density'], dtype=torch.float64).to(self.device)
         self.Move_in_tensor_livestock_PB = torch.tensor(self.Target_move_in['livestock_PB'], dtype=torch.float64).to(self.device)
         self.Move_in_tensor_sensitivity = torch.tensor(self.Target_move_in['sensitivity'], dtype=torch.float64).to(self.device)
         self.Move_in_tensor_relative_pm25 = torch.tensor(self.Target_move_in['relative_pm25'], dtype=torch.float64).to(self.device)
 
-        self.Move_out_tensor_N_demand = torch.tensor(self.Target_move_out['N_demand'], dtype=torch.float64).to(self.device)
+        # self.Move_out_tensor_N_demand = torch.tensor(self.Target_move_out['N_demand'], dtype=torch.float64).to(self.device)
         self.Move_out_tensor_ammonia_density = torch.tensor(self.Target_move_out['ammonia_density'], dtype=torch.float64).to(self.device)
         self.Move_out_tensor_livestock_PB = torch.tensor(self.Target_move_out['livestock_PB'], dtype=torch.float64).to(self.device)
         self.Move_out_tensor_sensitivity = torch.tensor(self.Target_move_out['sensitivity'], dtype=torch.float64).to(self.device)
         self.Move_out_tensor_relative_pm25 = torch.tensor(self.Target_move_out['relative_pm25'], dtype=torch.float64).to(self.device)
 
-        self.Move_in_tensor_Coef_N_demand = torch.tensor(self.Coef_move_in['N_demand'].values, dtype=torch.float64).to(self.device)
+        # self.Move_in_tensor_Coef_N_demand = torch.tensor(self.Coef_move_in['N_demand'].values, dtype=torch.float64).to(self.device)
         self.Move_in_tensor_Coef_ammonia_density = torch.tensor(self.Coef_move_in['ammonia_density'].values, dtype=torch.float64).to(self.device)
         self.Move_in_tensor_Coef_livestock_PB = torch.tensor(self.Coef_move_in['livestock_PB'].values, dtype=torch.float64).to(self.device)
 
-        self.Move_out_tensor_Coef_N_demand = torch.tensor(self.Coef_move_out['N_demand'].values, dtype=torch.float64).to(self.device)
+        # self.Move_out_tensor_Coef_N_demand = torch.tensor(self.Coef_move_out['N_demand'].values, dtype=torch.float64).to(self.device)
         self.Move_out_tensor_Coef_ammonia_density = torch.tensor(self.Coef_move_out['ammonia_density'].values, dtype=torch.float64).to(self.device)
         self.Move_out_tensor_Coef_livestock_PB = torch.tensor(self.Coef_move_out['livestock_PB'].values, dtype=torch.float64).to(self.device)
         
@@ -102,8 +102,8 @@ class LivestockEnv(gym.Env):
 
         self.state['Amount_Move_in'][move_in_idx, :] += amounts.cpu().numpy()
         self.state['Amount_Move_out'][move_out_idx, :] -= amounts.cpu().numpy()
-        self.state['N_demand_Move_in'][move_in_idx] += (amounts.double() @ self.Move_in_tensor_Coef_N_demand[move_in_idx, :]).item()
-        self.state['N_demand_Move_out'][move_out_idx] -= (amounts.double() @ self.Move_out_tensor_Coef_N_demand[move_out_idx, :]).item()
+        # self.state['N_demand_Move_in'][move_in_idx] += (amounts.double() @ self.Move_in_tensor_Coef_N_demand[move_in_idx, :]).item()
+        # self.state['N_demand_Move_out'][move_out_idx] -= (amounts.double() @ self.Move_out_tensor_Coef_N_demand[move_out_idx, :]).item()
         self.state['ammonia_density_Move_in'][move_in_idx] += (amounts.double() @ self.Move_in_tensor_Coef_ammonia_density[move_in_idx, :]).item()
         self.state['ammonia_density_Move_out'][move_out_idx] -= (amounts.double() @ self.Move_out_tensor_Coef_ammonia_density[move_out_idx, :]).item()
         self.state['livestock_PB_Move_in'][move_in_idx] += (amounts.double() @ self.Move_in_tensor_Coef_livestock_PB[move_in_idx, :]).item()
@@ -140,15 +140,14 @@ class LivestockEnv(gym.Env):
             name = '_Move_out'
         if is_move_in:
             sensitivity, pm25relative = self.evaluate_sensitivity_and_pm25relative(idx)
-        N_demand_reward = self.get_reward(f'N_demand{name}', idx, self.thresholds[0], self.reward_func)
-        ammonia_density_reward = self.get_reward(f'ammonia_density{name}', idx, self.thresholds[1], self.reward_func)
-        livestock_PB_reward= self.get_reward(f'livestock_PB{name}', idx, self.thresholds[2], self.reward_func)
+        ammonia_density_reward = self.get_reward(f'ammonia_density{name}', idx, self.thresholds[0], self.reward_func)
+        livestock_PB_reward= self.get_reward(f'livestock_PB{name}', idx, self.thresholds[1], self.reward_func)
         
         if is_move_in:
-            for i, _ in enumerate([sensitivity, pm25relative, N_demand_reward, ammonia_density_reward, livestock_PB_reward]):
+            for i, _ in enumerate([sensitivity, pm25relative, ammonia_density_reward, livestock_PB_reward]):
                 reward += _ * self.reward_priority[i]
         else:
-            for i, _ in enumerate([N_demand_reward, ammonia_density_reward, livestock_PB_reward]):
+            for i, _ in enumerate([ammonia_density_reward, livestock_PB_reward]):
                 reward += _ * self.reward_priority[2+i]
 
         # # 移入县和移出县的微调系数
@@ -170,22 +169,18 @@ class LivestockEnv(gym.Env):
     
     def check_termination_condition(self):
         # 检查所有移入和移出的县是否满足终止条件
-        N_demand_condition = (
-            (self.state['N_demand_Move_in'] == self.thresholds[0]).all() and
-            (self.state['N_demand_Move_out'] == self.thresholds[0]).all()
-        )
         
         ammonia_density_condition = (
-            (self.state['ammonia_density_Move_in'] == self.thresholds[1]).all() and
-            (self.state['ammonia_density_Move_out'] == self.thresholds[1]).all()
+            (self.state['ammonia_density_Move_in'] == self.thresholds[0]).all() and
+            (self.state['ammonia_density_Move_out'] == self.thresholds[0]).all()
         )
         
         livestock_PB_condition = (
-            (self.state['livestock_PB_Move_in'] == self.thresholds[2]).all() and
-            (self.state['livestock_PB_Move_out'] == self.thresholds[2]).all()
+            (self.state['livestock_PB_Move_in'] == self.thresholds[1]).all() and
+            (self.state['livestock_PB_Move_out'] == self.thresholds[1]).all()
         )
         
-        return N_demand_condition and ammonia_density_condition and livestock_PB_condition
+        return ammonia_density_condition and livestock_PB_condition
 
     @staticmethod
     def reward_func(x, x0, sigma):
@@ -252,8 +247,6 @@ class LivestockEnv(gym.Env):
         self.state = {
             'Amount_Move_in': self.Move_in.values,
             'Amount_Move_out': self.Move_out.values,
-            'N_demand_Move_in': self.Target_move_in['N_demand'].values.reshape(-1, 1),
-            'N_demand_Move_out': self.Target_move_out['N_demand'].values.reshape(-1, 1),
             'ammonia_density_Move_in': self.Target_move_in['ammonia_density'].values.reshape(-1, 1),
             'ammonia_density_Move_out': self.Target_move_out['ammonia_density'].values.reshape(-1, 1),
             'livestock_PB_Move_in': self.Target_move_in['livestock_PB'].values.reshape(-1, 1),
@@ -275,7 +268,7 @@ if __name__ == "__main__":
     # for country in ['aus', 'br', 'cn', 'usa', 'us']:
     
     for country in ['cn']:
-        config = LivestockEnvConfig(country, Reward_priority=[4, 4, 3, 2, 1], thresholds=[0, 31, 0], mobility_ratio=0.25)
+        config = LivestockEnvConfig(country, Reward_priority=[4, 4, 2, 1], thresholds=[0, 31, 0], mobility_ratio=0.25)
         env = LivestockEnv(config)
         state, _ = env.reset()
         print("Initial State:", )
