@@ -17,18 +17,21 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
         self.fc_amount_out = nn.Linear(observation_space['Amount_Move_out'].shape[1], features_dim)
         self.layernorm_amount_out = nn.LayerNorm(features_dim)
         
-        self.fc_ammonia_density_in = nn.Linear(observation_space['ammonia_density_Move_in'].shape[1], features_dim)
-        self.layernorm_ammonia_density_in = nn.LayerNorm(features_dim)
-        self.fc_ammonia_density_out = nn.Linear(observation_space['ammonia_density_Move_out'].shape[1], features_dim)
-        self.layernorm_ammonia_density_out = nn.LayerNorm(features_dim)
-        self.fc_livestock_pb_in = nn.Linear(observation_space['livestock_PB_Move_in'].shape[1], features_dim)
-        self.layernorm_livestock_pb_in = nn.LayerNorm(features_dim)
-        self.fc_livestock_pb_out = nn.Linear(observation_space['livestock_PB_Move_out'].shape[1], features_dim)
-        self.layernorm_livestock_pb_out = nn.LayerNorm(features_dim)
+        self.fc_n_demand_in = nn.Linear(observation_space['N_demand_Move_in'].shape[1], features_dim)
+        self.layernorm_n_demand_in = nn.LayerNorm(features_dim)
+        self.fc_n_demand_out = nn.Linear(observation_space['N_demand_Move_out'].shape[1], features_dim)
+        self.layernorm_n_demand_out = nn.LayerNorm(features_dim)
+
+        self.fc_ammonia_in = nn.Linear(observation_space['Ammonia_Move_in'].shape[1], features_dim)
+        self.layernorm_ammonia_in = nn.LayerNorm(features_dim)
+        self.fc_ammonia_out = nn.Linear(observation_space['Ammonia_Move_out'].shape[1], features_dim)
+        self.layernorm_ammonia_out = nn.LayerNorm(features_dim)
+ 
         self.fc_relative_pm25_in = nn.Linear(observation_space['relative_pm25_Move_in'].shape[1], features_dim)
         self.layernorm_relative_pm25_in = nn.LayerNorm(features_dim)
         self.fc_relative_pm25_out = nn.Linear(observation_space['relative_pm25_Move_out'].shape[1], features_dim)
         self.layernorm_relative_pm25_out = nn.LayerNorm(features_dim)
+        
         self.fc_sensitivity_in = nn.Linear(observation_space['sensitivity_Move_in'].shape[1], features_dim)
         self.layernorm_sensitivity_in = nn.LayerNorm(features_dim)
         self.fc_sensitivity_out = nn.Linear(observation_space['sensitivity_Move_out'].shape[1], features_dim)
@@ -45,10 +48,10 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
         dummy_input = {
             "Amount_Move_in": th.zeros((1,) + observation_space['Amount_Move_in'].shape),
             "Amount_Move_out": th.zeros((1,) + observation_space['Amount_Move_out'].shape),
-            "ammonia_density_Move_in": th.zeros((1,) + observation_space['ammonia_density_Move_in'].shape),
-            "ammonia_density_Move_out": th.zeros((1,) + observation_space['ammonia_density_Move_out'].shape),
-            "livestock_PB_Move_in": th.zeros((1,) + observation_space['livestock_PB_Move_in'].shape),
-            "livestock_PB_Move_out": th.zeros((1,) + observation_space['livestock_PB_Move_out'].shape),
+            "N_demand_Move_in": th.zeros((1,) + observation_space['N_demand_Move_in'].shape),
+            "N_demand_Move_out": th.zeros((1,) + observation_space['N_demand_Move_out'].shape),
+            "Ammonia_Move_in": th.zeros((1,) + observation_space['Ammonia_Move_in'].shape),
+            "Ammonia_Move_out": th.zeros((1,) + observation_space['Ammonia_Move_out'].shape),
             "relative_pm25_Move_in": th.zeros((1,) + observation_space['relative_pm25_Move_in'].shape),
             "relative_pm25_Move_out": th.zeros((1,) + observation_space['relative_pm25_Move_out'].shape),
             "sensitivity_Move_in": th.zeros((1,) + observation_space['sensitivity_Move_in'].shape),
@@ -59,10 +62,10 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
     def forward(self, observations):
         amount_in_tensor = observations["Amount_Move_in"]
         amount_out_tensor = observations["Amount_Move_out"]
-        ammonia_density_in_tensor = observations["ammonia_density_Move_in"]
-        ammonia_density_out_tensor = observations["ammonia_density_Move_out"]
-        livestock_pb_in_tensor = observations["livestock_PB_Move_in"]
-        livestock_pb_out_tensor = observations["livestock_PB_Move_out"]
+        n_demand_in_tensor = observations["N_demand_Move_in"]
+        n_demand_out_tensor = observations["N_demand_Move_out"]
+        ammonia_in_tensor = observations["Ammonia_Move_in"]
+        ammonia_out_tensor = observations["Ammonia_Move_out"]
         relative_pm25_in_tensor = observations["relative_pm25_Move_in"]
         relative_pm25_out_tensor = observations["relative_pm25_Move_out"]
         sensitivity_in_tensor = observations["sensitivity_Move_in"]
@@ -74,14 +77,15 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
         x1 = self.layernorm_amount_in(x1)
         x2 = th.relu(self.fc_amount_out(amount_out_tensor))
         x2 = self.layernorm_amount_out(x2)
-        x5 = th.relu(self.fc_ammonia_density_in(ammonia_density_in_tensor))
-        x5 = self.layernorm_ammonia_density_in(x5)
-        x6 = th.relu(self.fc_ammonia_density_out(ammonia_density_out_tensor))
-        x6 = self.layernorm_ammonia_density_out(x6)
-        x7 = th.relu(self.fc_livestock_pb_in(livestock_pb_in_tensor))
-        x7 = self.layernorm_livestock_pb_in(x7)
-        x8 = th.relu(self.fc_livestock_pb_out(livestock_pb_out_tensor))
-        x8 = self.layernorm_livestock_pb_out(x8)
+        x3 = th.relu(self.fc_n_demand_in(n_demand_in_tensor))
+        x3 = self.layernorm_n_demand_in(x3)
+        x4 = th.relu(self.fc_n_demand_out(n_demand_out_tensor))
+        x4 = self.layernorm_n_demand_out(x4)
+        x5 = th.relu(self.fc_ammonia_in(ammonia_in_tensor))
+        x5 = self.layernorm_ammonia_in(x5)
+        x6 = th.relu(self.fc_ammonia_out(ammonia_out_tensor))
+        x6 = self.layernorm_ammonia_out(x6)
+
         x9 = th.relu(self.fc_relative_pm25_in(relative_pm25_in_tensor))
         x9 = self.layernorm_relative_pm25_in(x9)
         x10 = th.relu(self.fc_relative_pm25_out(relative_pm25_out_tensor))
@@ -91,8 +95,8 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
         x12 = th.relu(self.fc_sensitivity_out(sensitivity_out_tensor))
         x12 = self.layernorm_sensitivity_out(x12)
 
-        obs_tensor_in = th.cat([x1, x5, x7, x9, x11], dim=1)
-        obs_tensor_out = th.cat([x2, x6, x8, x10, x12], dim=1)
+        obs_tensor_in = th.cat([x1, x3, x5, x9, x11], dim=1)
+        obs_tensor_out = th.cat([x2, x4, x6, x10, x12], dim=1)
 
 
         x_in = th.relu(self.fc1(obs_tensor_in))

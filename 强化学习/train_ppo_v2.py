@@ -1,4 +1,3 @@
-from ast import arg
 import os
 import sys
 sys.path.append("../stable-baselines3")
@@ -14,10 +13,26 @@ from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.vec_env import DummyVecEnv, VecCheckNan
 from AttentionPolicy import CustomAttentionPolicy
-import argparse
+
+register(
+    id='LivestockEnv-v2',
+    entry_point='livestockEnvV2:LivestockEnv',
+)
+country = 'eu'
+config = LivestockEnvConfig(country, 
+                            Reward_priority=[4, 2, 1], 
+                            thresholds=[0, 0], 
+                            mobility_ratio=0.02,
+                            max_steps=50000,
+                            df_path='欧盟更新PB后第一步.xlsx')
+
+version = 'v10'
+env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+env = VecCheckNan(env, raise_exception=True)
+eval_callback = EvalCallback(env, best_model_save_path=f'../logs/{version}/{country}/',
+                             log_path='./logs/', eval_freq=2**15+1,
+                             deterministic=False, render=False)
 from typing import Callable
-
-
 
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
@@ -29,7 +44,7 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
     def func(progress_remaining: float) -> float:
         """
-        Progress will decrease from 1 (beginning) to 0.
+        Progress will decrease from 1 (beginning) to 0./
 
         :param progress_remaining:
         :return: current learning rate
@@ -37,52 +52,15 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
         return progress_remaining * initial_value
 
     return func
-
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--country', type=str, default='cn')
-    parser.add_argument('--total_timesteps', type=int, default=100000, help='Total timesteps for training')
-    parser.add_argument('--mobility_ratio', type=float, default=0.1, help='Mobility ratio for training')
-    parser.add_argument('--learning_rate', type=float, default=3e-3, help='Learning rate for training')
-    parser.add_argument('--device', type=str, default='cuda', help='device for training')
-    parser.add_argument('--checkpoint', type=str, default=None)
-    parser.add_argument('--Reward_priority', type=list, default=[4, 4, 3, 2, 1])
-    parser.add_argument('--thresholds', type=list, default=[0, 31, 0])
-    parser.add_argument('--max_steps', type=int, default=12000)
-    
-    args = parser.parse_args()
-    register(
-        id='LivestockEnv-v2',
-        entry_point='livestockEnvV2:LivestockEnv',
-    )
-    config = LivestockEnvConfig(args.country, 
-                                Reward_priority=args.Reward_priority, 
-                                thresholds=args.thresholds, 
-                                mobility_ratio=args.mobility_ratio,
-                                max_steps=args.max_steps)
-
-    # 创建并包装环境
-    env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
-    env = VecCheckNan(env, raise_exception=True)
-    eval_callback = EvalCallback(env, best_model_save_path=f'../logs/v2/{args.country}/',
-                                log_path='./logs/', eval_freq=config.max_steps,
-                                deterministic=False, render=False)
-
-    model = PPO_action_mask_v2(CustomAttentionPolicy, 
+model = PPO_action_mask_v2(CustomAttentionPolicy, 
                         env, 
-                        batch_size=4, 
+                        batch_size=256, 
                         verbose=1, 
                         tensorboard_log='./board/',
                         seed=42,
-                        kwargs={'country':args.country},
-                        learning_rate=linear_schedule(2e-2),
-                        n_steps=2**13,
+                        kwargs={'country':country},
+                        learning_rate=linear_schedule(2e-5),
+                        n_steps=2**15,
                         )
-    # model.learn(total_timesteps=args.total_timesteps,tb_log_name = f"{country}PPO928",callback=eval_callback, heat_rate=0.2)
-    model.learn(total_timesteps=args.total_timesteps,tb_log_name = f"{args.country}PPO_v2",callback=eval_callback)
-
-
-
+model.learn(total_timesteps=200000,tb_log_name = f"{country}PPO_{version}",callback=eval_callback)
 
