@@ -1,0 +1,409 @@
+---
+title: "Calculate Sensitivity"
+author: ""
+# date: "`r Sys.Date()`"
+format: 
+  html:
+    code-fold: false
+    embed-resources: true
+    toc: true
+    toc-location: right
+---
+
+
+# Initialization
+```{r}
+#| include: false
+
+library(knitr)
+rdir <- "/sensitivity"
+knitr::opts_knit$set(root.dir = rdir)
+```
+
+
+```{r}
+#| output: false
+
+source("00_color_setting.R")
+library(tidyverse)
+library(data.table)
+library(changepoint)
+library(quantreg)
+library(MASS)
+library(sf)
+library(RColorBrewer)
+library(ggdist)
+library(patchwork)
+
+odir <- "results/"
+```
+
+
+# Input data
+```{r}
+#| include: false
+
+ifile_blogs_pollution <-
+  "data/05_num_blogs_county_usa.csv.gz"
+
+ifile_pm25 <-
+  "data/05_PM25_county_level_2019_usa.csv.gz"
+
+ifile_adm <-
+  "data/国家范围/美国/美国.shp"
+```
+
+
+```{r}
+blogs_pollution <-
+  fread(ifile_blogs_pollution) %>%
+  .[HASC_2 != ""]
+```
+
+
+```{r}
+pm25 <-
+  fread(ifile_pm25) %>%
+  .[NAME_2 != "" & !is.na(PM25)]
+```
+
+
+```{r}
+adm <-
+  st_read(ifile_adm)
+```
+
+
+# Data process
+```{r}
+adm_enough_sample <-
+  blogs_pollution[, .(num_date_keywords = sum(keywords_n != 0)), by = .(HASC_2)]
+```
+
+
+# Panel data
+```{r}
+blogs_pollution_pm25 <-
+  merge(blogs_pollution,
+        pm25,
+        by = c("date", "HASC_2")) %>%
+  # filter the adm unit with enough sample
+  .[HASC_2 %in% adm_enough_sample[num_date_keywords>30, HASC_2]]
+```
+
+
+```{r}
+# dependent variable
+blogs_pollution_pm25[, total_asinh := asinh(total_n)]
+
+# controls
+blogs_pollution_pm25[, keywords_asinh := asinh(keywords_n)]
+
+# Fixed-effects
+blogs_pollution_pm25[, dow := lubridate::wday(date)]
+blogs_pollution_pm25[, dow1 := ifelse(dow == 1, 1, 0)]
+blogs_pollution_pm25[, dow2 := ifelse(dow == 2, 1, 0)]
+blogs_pollution_pm25[, dow3 := ifelse(dow == 3, 1, 0)]
+blogs_pollution_pm25[, dow4 := ifelse(dow == 4, 1, 0)]
+blogs_pollution_pm25[, dow5 := ifelse(dow == 5, 1, 0)]
+blogs_pollution_pm25[, dow6 := ifelse(dow == 6, 1, 0)]
+```
+
+
+```{r}
+adm_list <-
+  blogs_pollution_pm25[, .(HASC_2)] %>%
+  unique()
+```
+
+
+# Detect change point
+```{r}
+detectCP <- function(panel){
+  q25 <- 
+    quantile(panel$PM25, probs=0.25)
+  q99 <- 
+    quantile(panel$PM25, probs=0.99)
+  
+  best_aic <- Inf
+  best_cp <- NA
+  sequence <- seq(q25, q99, by = 1)
+
+  aic_values <- numeric(length = length(sequence)) 
+  cp_index <- 1
+  
+  for(potential_cp in sequence){
+    panel[, I_gt_cp := ifelse(PM25>=potential_cp, 1, 0)]
+    
+    panel[, interaction_term := (PM25-potential_cp)*I_gt_cp]
+    
+    model_detect_cp <-
+      lm(keywords_asinh ~ 
+           I_gt_cp + interaction_term + 
+           total_asinh + 
+           dow1 + dow2 + dow3 + dow4 + dow5 + dow6,
+         data = panel)
+
+    current_aic <- AIC(model_detect_cp)
+    aic_values[cp_index] <- current_aic
+
+    if (current_aic < best_aic) {
+      best_aic <- current_aic
+      best_cp <- potential_cp
+    }
+    
+    cp_index <- cp_index + 1
+  }
+  
+  return(best_cp)
+}
+```
+
+
+```{r}
+best_cp_list <-
+  lapply(adm_list$HASC_2, function(adm_spec){
+    detectCP(blogs_pollution_pm25[HASC_2 == adm_spec])
+  }) %>% unlist()
+
+adm_list[, best_cp := best_cp_list]
+```
+
+
+# Fit model
+```{r}
+fitModel <- function(panel, best_cp){
+  panel[, I_gt_cp := ifelse(PM25>=best_cp, 1, 0)]
+  panel[, interaction_term := (PM25-best_cp)*I_gt_cp]
+  
+  fit_model <- 
+    lm(keywords_asinh ~ 
+         I_gt_cp + interaction_term + 
+         total_asinh + 
+         dow1 + dow2 + dow3 + dow4 + dow5 + dow6,
+       data = panel)
+
+  coef <-
+    summary(fit_model)$coef %>%
+    as.data.table() %>%
+    cbind(coef = row.names(summary(fit_model)$coef)) %>%
+    # confidence level
+    cbind(as.data.table(confint(fit_model, level = 0.95))) %>%
+    setnames(old = c("2.5 %", "97.5 %"),
+             new = c("Estimate_lwr", "Estimate_upr")) %>%
+    # scale to an approximate percentage change
+    .[, Estimate := exp(Estimate)-1] %>%
+    .[, Estimate_lwr := exp(Estimate_lwr)-1] %>%
+    .[, Estimate_upr := exp(Estimate_upr)-1] %>%
+    # filter the coef
+    .[coef == "interaction_term"]
+  
+  return(coef)
+}
+```
+
+
+```{r}
+coef_list <-
+  lapply(1:nrow(adm_list), function(i){
+    fitModel(blogs_pollution_pm25[HASC_2 == adm_list[i, HASC_2]],
+             adm_list[i, best_cp])
+  }) %>% rbindlist()
+
+adm_list <- 
+  cbind(adm_list, coef_list)
+```
+
+
+# Predict model
+```{r}
+predictModel <- function(panel, best_cp, city){
+  panel[, I_gt_cp := ifelse(PM25>=best_cp, 1, 0)]
+  panel[, interaction_term := (PM25-best_cp)*I_gt_cp]
+  
+  fit_model <- 
+    lm(keywords_asinh ~ 
+         I_gt_cp + interaction_term,
+       data = panel)
+  
+  pred_with_ci <-
+    predict(fit_model,
+            newdata = panel,
+            type = "response",
+            level = 0.95,
+            se.fit = T)
+  
+  ci <- 1.96 * pred_with_ci$se.fit 
+  panel$fit_lower <- pred_with_ci$fit - ci
+  panel$fit_upper <- pred_with_ci$fit + ci
+  panel$fit <- pred_with_ci$fit
+  
+  return(panel)
+}
+```
+
+
+```{r}
+predict_list <-
+  lapply(1:nrow(adm_list), function(i){
+    predictModel(blogs_pollution_pm25[HASC_2 == adm_list[i, HASC_2]],
+                 adm_list[i, best_cp],
+                 adm_list[i, HASC_2])
+  }) %>% rbindlist(fill = T)
+```
+
+
+```{r}
+city_filter <-
+  adm_list[!is.na(Estimate) & `Pr(>|t|)`<0.05 & Estimate>=0]
+
+predict_list_filter <-
+  merge(city_filter[, .(HASC_2, best_cp, Estimate)],
+        predict_list,
+        all.x = T,
+        by = "HASC_2") %>%
+  .[PM25<best_cp, fit := 0]
+```
+
+
+# Output coef
+```{r}
+# fwrite(city_filter,
+#        paste0(odir, "usa_coef.csv"))
+```
+
+
+# Predict model in global
+```{r}
+predict_panel <-
+  blogs_pollution_pm25[HASC_2 %in% city_filter$HASC_2]
+
+best_cp <-
+  detectCP(predict_panel)
+
+predict_panel[, I_gt_cp := ifelse(PM25>=best_cp, 1, 0)]
+predict_panel[, interaction_term := (PM25-best_cp)*I_gt_cp]
+
+predict_panel[, sum_total_n := sum(total_n, na.rm = T), by = .(HASC_2)]
+
+fit_model <- 
+  lm(keywords_asinh ~ 
+       I_gt_cp + interaction_term,
+     data = predict_panel
+     )
+
+pred_with_ci <-
+  predict(fit_model,
+          newdata = predict_panel,
+          type = "response",
+          level = 0.95,
+          se.fit = T)
+
+ci <- 1.96 * pred_with_ci$se.fit
+predict_panel$fit_lower <- pred_with_ci$fit - ci
+predict_panel$fit_upper <- pred_with_ci$fit + ci
+predict_panel$fit <- pred_with_ci$fit
+
+predict_panel[PM25 < best_cp, fit := 0]
+predict_panel[PM25 < best_cp, fit_upper := 0]
+predict_panel[PM25 < best_cp, fit_lower := 0]
+```
+
+
+# Output fitted coef in global
+```{r}
+coef_global <-
+  summary(fit_model)$coef %>%
+  as.data.table() %>%
+  cbind(coef = row.names(summary(fit_model)$coef)) %>%
+  # confidence level
+  cbind(as.data.table(confint(fit_model, level = 0.95))) %>%
+  setnames(old = c("2.5 %", "97.5 %"),
+           new = c("Estimate_lwr", "Estimate_upr")) %>%
+  # scale to an approximate percentage change
+  .[, Estimate := exp(Estimate)-1] %>%
+  .[, Estimate_lwr := exp(Estimate_lwr)-1] %>%
+  .[, Estimate_upr := exp(Estimate_upr)-1] %>%
+  # filter the coef
+  .[coef == "interaction_term"]
+```
+
+
+# Output plot
+```{r}
+p1 <-
+  ggplot() +
+  geom_line(predict_list_filter,
+            mapping = aes(x = PM25,
+                          y = fit*100,
+                          group = HASC_2
+                          ),
+            color = colorgroup2[2],
+            alpha = 0.5) +
+  geom_ribbon(predict_panel,
+              mapping = aes(x = PM25,
+                            ymin = fit_lower*100,
+                            ymax = fit_upper*100),
+              fill = colorgroup2[2],
+              alpha = 1) +
+  geom_line(predict_panel,
+            mapping = aes(x = PM25,
+                          y = fit*100),
+            color = colorgroup1[2],
+            alpha = 1,
+            linewidth = 1) +
+  labs(x = expression(PM[2.5]~'(' * 'ug' * "/m"^3 * ')'),
+       y = "Percentage change in pollution-related blogs (%)") +
+  scale_color_identity() +
+  scale_x_continuous(limits = c(0, 50),
+                     expand = c(0.02, 0.02)) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_text(color = "black"),
+    text = element_text(family = "serif", face = "bold")  ### Times new roman
+  )
+
+p2 <-
+  ggplot(predict_list_filter[, .(HASC_2, best_cp)] %>% unique()) +
+  aes(x = best_cp) +
+  stat_halfeye(color = colorgroup1[2],
+               fill = colorgroup2[2]) +
+  scale_x_continuous(limits = c(0, 50),
+                     expand = c(0.02, 0.02)) +
+  labs(x = "Sensitivity threshold") +
+  theme_void()
+
+p <- 
+  p1 + inset_element(p2, left = 0, bottom = 0.01, right = 1, top = 0.1) +
+  plot_annotation('USA',
+                  theme = theme(plot.title = element_text(
+                    hjust = 0.5,
+                    margin = margin(b = 0),
+                    size = 15,
+                    family = "serif",  ###
+                    face = "bold" ###
+                  )))
+
+print(p)
+```
+
+
+```{r}
+# ggsave(plot = p,
+#        filename = paste0("usa_", "sensitivity.pdf"),
+#        path = odir,
+#        width = 2.25*0.75,
+#        height = 2*0.75,
+#        units = "in",
+#        dpi = 300,
+#        limitsize = F)
+```
+
+
+
+
+
+
+
