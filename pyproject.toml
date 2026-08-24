@@ -1,0 +1,28 @@
+[project]
+name = "livestock-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "cloudpickle==2.2.1",
+    "einops>=0.8,<0.9",
+    "gymnasium==0.29.1",
+    "numpy==1.24.4",
+    "openpyxl>=3.1,<4",
+    "pandas>=2,<3",
+    "scipy>=1.11,<2",
+    "stable-baselines3",
+    "tensorboard>=2.17,<3",
+    "torch==2.3.1",
+    "tqdm>=4.66,<5",
+]
+
+[tool.uv.sources]
+stable-baselines3 = { path = "stable-baselines3", editable = true }
+torch = { index = "pytorch-cu121" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
