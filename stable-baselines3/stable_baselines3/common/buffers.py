@@ -380,10 +380,15 @@ class RolloutBuffer(BaseBuffer):
         gae_lambda: float = 1,
         gamma: float = 0.99,
         n_envs: int = 1,
+        store_action_masks: bool = False,
     ):
         super().__init__(buffer_size, observation_space, action_space, device, n_envs=n_envs)
         self.gae_lambda = gae_lambda
         self.gamma = gamma
+        self.store_action_masks = store_action_masks
+        if store_action_masks and not isinstance(action_space, spaces.Discrete):
+            raise ValueError("Action-mask storage only supports discrete action spaces")
+        self.mask_dims = int(action_space.n) if isinstance(action_space, spaces.Discrete) else 0
         self.generator_ready = False
         self.reset()
 
@@ -396,6 +401,11 @@ class RolloutBuffer(BaseBuffer):
         self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.action_masks = (
+            np.zeros((self.buffer_size, self.n_envs, self.mask_dims), dtype=bool)
+            if self.store_action_masks
+            else None
+        )
         self.generator_ready = False
         super().reset()
 
@@ -444,6 +454,7 @@ class RolloutBuffer(BaseBuffer):
         episode_start: np.ndarray,
         value: th.Tensor,
         log_prob: th.Tensor,
+        action_mask: Optional[th.Tensor] = None,
     ) -> None:
         """
         :param obs: Observation
@@ -473,6 +484,15 @@ class RolloutBuffer(BaseBuffer):
         self.episode_starts[self.pos] = np.array(episode_start)
         self.values[self.pos] = value.clone().cpu().numpy().flatten()
         self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
+        if self.action_masks is not None:
+            if action_mask is None:
+                raise ValueError("action_mask is required when store_action_masks=True")
+            action_masks = action_mask.detach().cpu().numpy().reshape(-1, self.mask_dims)
+            if len(action_masks) == 1:
+                action_masks = np.repeat(action_masks, self.n_envs, axis=0)
+            if len(action_masks) != self.n_envs:
+                raise ValueError(f"Expected 1 or {self.n_envs} action masks, got {len(action_masks)}")
+            self.action_masks[self.pos] = action_masks
         self.pos += 1
         if self.pos == self.buffer_size:
             self.full = True
@@ -490,6 +510,8 @@ class RolloutBuffer(BaseBuffer):
                 "advantages",
                 "returns",
             ]
+            if self.action_masks is not None:
+                _tensor_names.append("action_masks")
 
             for tensor in _tensor_names:
                 self.__dict__[tensor] = self.swap_and_flatten(self.__dict__[tensor])
@@ -516,8 +538,9 @@ class RolloutBuffer(BaseBuffer):
             self.log_probs[batch_inds].flatten(),
             self.advantages[batch_inds].flatten(),
             self.returns[batch_inds].flatten(),
+            None if self.action_masks is None else self.action_masks[batch_inds],
         )
-        return RolloutBufferSamples(*tuple(map(self.to_torch, data)))
+        return RolloutBufferSamples(*(self.to_torch(item) if item is not None else None for item in data))
 
 
 class DictReplayBuffer(ReplayBuffer):
@@ -730,6 +753,7 @@ class DictRolloutBuffer(RolloutBuffer):
         gae_lambda: float = 1,
         gamma: float = 0.99,
         n_envs: int = 1,
+        store_action_masks: bool = False,
     ):
         super(RolloutBuffer, self).__init__(buffer_size, observation_space, action_space, device, n_envs=n_envs)
 
@@ -737,6 +761,10 @@ class DictRolloutBuffer(RolloutBuffer):
 
         self.gae_lambda = gae_lambda
         self.gamma = gamma
+        self.store_action_masks = store_action_masks
+        if store_action_masks and not isinstance(action_space, spaces.Discrete):
+            raise ValueError("Action-mask storage only supports discrete action spaces")
+        self.mask_dims = int(action_space.n) if isinstance(action_space, spaces.Discrete) else 0
 
         self.generator_ready = False
         self.reset()
@@ -752,6 +780,11 @@ class DictRolloutBuffer(RolloutBuffer):
         self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.action_masks = (
+            np.zeros((self.buffer_size, self.n_envs, self.mask_dims), dtype=bool)
+            if self.store_action_masks
+            else None
+        )
         self.generator_ready = False
         super(RolloutBuffer, self).reset()
 
@@ -763,6 +796,7 @@ class DictRolloutBuffer(RolloutBuffer):
         episode_start: np.ndarray,
         value: th.Tensor,
         log_prob: th.Tensor,
+        action_mask: Optional[th.Tensor] = None,
     ) -> None:
         """
         :param obs: Observation
@@ -794,6 +828,15 @@ class DictRolloutBuffer(RolloutBuffer):
         self.episode_starts[self.pos] = np.array(episode_start)
         self.values[self.pos] = value.clone().cpu().numpy().flatten()
         self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
+        if self.action_masks is not None:
+            if action_mask is None:
+                raise ValueError("action_mask is required when store_action_masks=True")
+            action_masks = action_mask.detach().cpu().numpy().reshape(-1, self.mask_dims)
+            if len(action_masks) == 1:
+                action_masks = np.repeat(action_masks, self.n_envs, axis=0)
+            if len(action_masks) != self.n_envs:
+                raise ValueError(f"Expected 1 or {self.n_envs} action masks, got {len(action_masks)}")
+            self.action_masks[self.pos] = action_masks
         self.pos += 1
         if self.pos == self.buffer_size:
             self.full = True
@@ -810,6 +853,8 @@ class DictRolloutBuffer(RolloutBuffer):
                 self.observations[key] = self.swap_and_flatten(obs)
 
             _tensor_names = ["actions", "values", "log_probs", "advantages", "returns"]
+            if self.action_masks is not None:
+                _tensor_names.append("action_masks")
 
             for tensor in _tensor_names:
                 self.__dict__[tensor] = self.swap_and_flatten(self.__dict__[tensor])
@@ -836,4 +881,5 @@ class DictRolloutBuffer(RolloutBuffer):
             old_log_prob=self.to_torch(self.log_probs[batch_inds].flatten()),
             advantages=self.to_torch(self.advantages[batch_inds].flatten()),
             returns=self.to_torch(self.returns[batch_inds].flatten()),
+            action_masks=None if self.action_masks is None else self.to_torch(self.action_masks[batch_inds]),
         )

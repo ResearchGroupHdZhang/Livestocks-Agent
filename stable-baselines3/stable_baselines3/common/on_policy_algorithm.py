@@ -13,7 +13,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import obs_as_tensor, safe_mean
 from stable_baselines3.common.vec_env import VecEnv
-from 强化学习 import load_datas
+from data_loader import load_datas
 
 SelfOnPolicyAlgorithm = TypeVar("SelfOnPolicyAlgorithm", bound="OnPolicyAlgorithm")
 
@@ -298,6 +298,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                     amount = self.amount_adapt(move_out_idx, move_in_idx, breed)
                     violation = self.detect_violation(move_out_idx, move_in_idx, breed, amount)
 
+                rollout_action_mask = self.action_mask.clone()
+
             # Rescale and perform action
             actions = actions.cpu().numpy()
             clipped_actions = actions
@@ -364,6 +366,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 self._last_episode_starts,  # type: ignore[arg-type]
                 values,
                 log_probs,
+                **({"action_mask": rollout_action_mask} if getattr(rollout_buffer, "store_action_masks", False) else {}),
             )
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones

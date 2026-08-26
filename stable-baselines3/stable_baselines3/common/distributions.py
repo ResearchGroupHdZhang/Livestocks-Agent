@@ -8,7 +8,6 @@ import torch as th
 from gymnasium import spaces
 from torch import nn
 from torch.distributions import Bernoulli, Categorical, Normal
-from 强化学习.CategoricalMasked import CategoricalMasked
 
 from stable_baselines3.common.preprocessing import get_action_dim
 
@@ -285,11 +284,24 @@ class CategoricalDistribution(Distribution):
         action_logits = nn.Linear(latent_dim, self.action_dim)
         return action_logits
 
-    def proba_distribution(self: SelfCategoricalDistribution, action_logits: th.Tensor, mask) -> SelfCategoricalDistribution:
+    def proba_distribution(
+        self: SelfCategoricalDistribution, action_logits: th.Tensor, mask=None
+    ) -> SelfCategoricalDistribution:
         if mask is None:
             self.distribution = Categorical(logits=action_logits)
         else:
-            self.distribution = CategoricalMasked(logits=action_logits, mask=~mask)
+            mask = (~mask).reshape(-1, self.action_dim)
+            if len(mask) == 1:
+                mask = mask.expand(len(action_logits), -1)
+            if len(mask) != len(action_logits):
+                raise ValueError(f"Expected 1 or {len(action_logits)} action masks, got {len(mask)}")
+            self.distribution = Categorical(
+                logits=th.where(
+                    mask,
+                    action_logits,
+                    th.finfo(action_logits.dtype).min,
+                )
+            )
         return self
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
