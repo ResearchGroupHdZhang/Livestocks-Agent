@@ -1,0 +1,24 @@
+feasible solution found by trivial heuristic after 0.2 seconds, objective value 0.000000e+00
+presolving:
+(round 1, fast)       4850 del vars, 10 del conss, 0 add conss, 40166 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+(round 2, fast)       4850 del vars, 20 del conss, 0 add conss, 40166 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+   (0.9s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (1.0s) no symmetry present (symcode time: 0.01)
+presolving (3 rounds: 3 fast, 1 medium, 1 exhaustive):
+ 4850 deleted vars, 20 deleted constraints, 0 added constraints, 40166 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques
+presolved problem has 66924 variables (0 bin, 66283 int, 0 impl, 641 cont) and 1999 constraints
+   1999 constraints of type <linear>
+Presolving Time: 0.92
+transformed 2/2 original solutions to the transformed problem space
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+ 15.6s|     1 |     0 | 29441 |     - |   406M |   0 |  66k|1999 |1999 |   0 |  0 |   0 |   0 | 4.707352e+06 | 0.000000e+00 |    Inf | unknown
+r15.8s|     1 |     0 | 29441 |     - |shifting|   0 |  66k|1999 |1999 |   0 |  0 |   0 |   0 | 4.707352e+06 | 4.706877e+06 |   0.01%| unknown
+
+SCIP Status        : solving was interrupted [gap limit reached]
+Solving Time (sec) : 15.79
+Solving Nodes      : 1
+Primal Bound       : +4.70687725229552e+06 (3 solutions)
+Dual Bound         : +4.70735164607162e+06
+Gap                : 0.01 %

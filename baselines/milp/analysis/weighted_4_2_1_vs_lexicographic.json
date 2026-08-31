@@ -1,0 +1,125 @@
+{
+  "scope": {
+    "dataset": "欧盟更新PB后第一步.xlsx",
+    "weighted_objective": "4*N_hat - 2*L_hat + E_hat",
+    "comparison": "corrected source-region composition metrics recomputed from both serialized solutions"
+  },
+  "weighted_4_2_1_solver": {
+    "status": "gaplimit",
+    "termination_reason": "gap_reached",
+    "certified": true,
+    "target_gap": 0.001,
+    "gap": 0.00010078736934683722,
+    "solutions": 3,
+    "primal_bound": 4706877.25229552,
+    "dual_bound": 4707351.6460716175,
+    "nodes": 1,
+    "solver_seconds": 15.786693,
+    "solve_elapsed_seconds": 16.826709872984793
+  },
+  "weighted_4_2_1_timing": {
+    "input_load_elapsed_seconds": 0.19896826200420037,
+    "build_elapsed_seconds": 5.3676172029809095,
+    "serialization_elapsed_seconds": 0.3156306410091929,
+    "total_elapsed_seconds": 22.81845317000989,
+    "peak_rss_mb": 635.26171875
+  },
+  "weighted_4_2_1": {
+    "source_n_resolved_kg": 1682913373.3743982,
+    "source_n_resolved_ratio": 0.999994523034587,
+    "source_structure_loss_normalized": 0.04578388211530483,
+    "source_structure_loss_max": 0.19861231279275882,
+    "source_share_l1_change_mean": 0.8073565252336758,
+    "source_share_l1_change_max": 1.9787721514822008,
+    "environment_score": 9898211870.0,
+    "environment_score_normalized": 0.7984675518260563,
+    "weighted_objective_4_2_1": 4.706877879733795,
+    "total_moved": 3301930822,
+    "moved_by_kind": {
+      "num diary": 3975102,
+      "num meat": 4917480,
+      "num pig": 49844003,
+      "num Sheep and Goats": 38792525,
+      "num Hen eggs in shell, fresh": 95036479,
+      "num Meat of chickens, fresh or chilled": 3109365233
+    }
+  },
+  "lexicographic": {
+    "source_n_resolved_kg": 1682922511.8734784,
+    "source_n_resolved_ratio": 0.9999999531709051,
+    "source_structure_loss_normalized": 0.2026347039639687,
+    "source_structure_loss_max": 0.4816199901731821,
+    "source_share_l1_change_mean": 0.12954174074389838,
+    "source_share_l1_change_max": 0.8338307343021649,
+    "environment_score": 599596574.0,
+    "environment_score_normalized": 0.04836817142458993,
+    "weighted_objective_4_2_1": 3.643098576180273,
+    "total_moved": 344568496,
+    "moved_by_kind": {
+      "num diary": 3704642,
+      "num meat": 4825127,
+      "num pig": 56284975,
+      "num Sheep and Goats": 46180271,
+      "num Hen eggs in shell, fresh": 52824876,
+      "num Meat of chickens, fresh or chilled": 180748605
+    }
+  },
+  "comparison": [
+    {
+      "metric": "source_n_resolved_kg",
+      "weighted_4_2_1": 1682913373.3743982,
+      "lexicographic": 1682922511.8734784,
+      "weighted_minus_lexicographic": -9138.499080181122,
+      "percent_change_vs_lexicographic": -0.0005430136572365343
+    },
+    {
+      "metric": "source_n_resolved_ratio",
+      "weighted_4_2_1": 0.999994523034587,
+      "lexicographic": 0.9999999531709051,
+      "weighted_minus_lexicographic": -5.430136318040901e-06,
+      "percent_change_vs_lexicographic": -0.0005430136572329282
+    },
+    {
+      "metric": "source_structure_loss_normalized",
+      "weighted_4_2_1": 0.04578388211530483,
+      "lexicographic": 0.2026347039639687,
+      "weighted_minus_lexicographic": -0.1568508218486639,
+      "percent_change_vs_lexicographic": -77.40570533098524
+    },
+    {
+      "metric": "source_share_l1_change_mean",
+      "weighted_4_2_1": 0.8073565252336758,
+      "lexicographic": 0.12954174074389838,
+      "weighted_minus_lexicographic": 0.6778147844897775,
+      "percent_change_vs_lexicographic": 523.2404479030467
+    },
+    {
+      "metric": "environment_score",
+      "weighted_4_2_1": 9898211870.0,
+      "lexicographic": 599596574.0,
+      "weighted_minus_lexicographic": 9298615296.0,
+      "percent_change_vs_lexicographic": 1550.8119457667215
+    },
+    {
+      "metric": "environment_score_normalized",
+      "weighted_4_2_1": 0.7984675518260563,
+      "lexicographic": 0.04836817142458993,
+      "weighted_minus_lexicographic": 0.7500993804014664,
+      "percent_change_vs_lexicographic": 1550.8119457667215
+    },
+    {
+      "metric": "weighted_objective_4_2_1",
+      "weighted_4_2_1": 4.706877879733795,
+      "lexicographic": 3.643098576180273,
+      "weighted_minus_lexicographic": 1.0637793035535217,
+      "percent_change_vs_lexicographic": 29.19984955962614
+    },
+    {
+      "metric": "total_moved",
+      "weighted_4_2_1": 3301930822.0,
+      "lexicographic": 344568496.0,
+      "weighted_minus_lexicographic": 2957362326.0,
+      "percent_change_vs_lexicographic": 858.2799531388383
+    }
+  ]
+}
