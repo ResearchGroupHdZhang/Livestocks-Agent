@@ -9,7 +9,13 @@ import pandas as pd
 from dataLoader import load_datas
 
 
-FILES = {"eu": "欧盟更新PB后第一步.xlsx"}
+FILES = {
+    "cn": "中国国家尺度更新PB第一步.xlsx",
+    "eu": "欧盟更新PB后第一步.xlsx",
+    "aus": "澳大利亚空间优化更新PB第一步.xlsx",
+    "usa": "美国数据国家尺度第一步1223.xlsx",
+    "br": "巴西指标国家优化更新PB第一步.xlsx",
+}
 
 
 def normalize(value):

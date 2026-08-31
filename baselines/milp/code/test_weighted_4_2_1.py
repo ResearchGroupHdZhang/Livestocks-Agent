@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pulp
 
 sys.path.insert(0, str(Path(__file__).parent))
 from weighted_4_2_1 import classify_termination, solve_weighted_4_2_1
@@ -40,6 +41,30 @@ def test_termination_policy():
     assert classify_termination("gaplimit", 1, 9e-4, 1e-3) == (True, "gap_reached")
     assert classify_termination("timelimit", 1, 0.2, 1e-3) == (False, "time_limit_uncertified")
     assert classify_termination("timelimit", 0, np.inf, 1e-3) == (False, "no_feasible_solution")
+
+
+def test_unlimited_solver_configuration():
+    original_solver = pulp.SCIP_PY
+    captured = {}
+
+    def capture_solver(**kwargs):
+        captured.update(kwargs)
+        return original_solver(**kwargs)
+
+    pulp.SCIP_PY = capture_solver
+    try:
+        solve_weighted_4_2_1(
+            "unlimited",
+            "toy",
+            toy_data(),
+            time_limit_seconds=None,
+            target_gap=0,
+            solver_msg=False,
+        )
+    finally:
+        pulp.SCIP_PY = original_solver
+    assert "timeLimit" not in captured, captured
+    assert captured["gapRel"] == 0, captured
 
 
 def demo(output_root):
@@ -86,4 +111,6 @@ def demo(output_root):
 
 if __name__ == "__main__":
     test_termination_policy()
+    os.environ["WEIGHTED_OUTPUT_DIR"] = sys.argv[1]
+    test_unlimited_solver_configuration()
     demo(Path(sys.argv[1]))

@@ -32,7 +32,7 @@ def solve_weighted_4_2_1(
     data,
     *,
     input_load_elapsed_seconds=0.0,
-    time_limit_seconds=7200,
+    time_limit_seconds=None,
     target_gap=1e-3,
     solver_msg=True,
     preflight_only=False,
@@ -221,13 +221,15 @@ def solve_weighted_4_2_1(
             encoding="utf-8",
         )
         return preflight
-    solver = pulp.SCIP_PY(
-        msg=solver_msg,
-        logPath=str(output_root / f"{country}_weighted.log"),
-        timeLimit=time_limit_seconds,
-        gapRel=target_gap,
-        options=["numerics/feastol=1e-7"],
-    )
+    solver_kwargs = {
+        "msg": solver_msg,
+        "logPath": str(output_root / f"{country}_weighted.log"),
+        "gapRel": target_gap,
+        "options": ["numerics/feastol=1e-7"],
+    }
+    if time_limit_seconds is not None:
+        solver_kwargs["timeLimit"] = time_limit_seconds
+    solver = pulp.SCIP_PY(**solver_kwargs)
     solve_started = perf_counter()
     problem.solve(solver)
     solve_elapsed_seconds = perf_counter() - solve_started
@@ -380,8 +382,10 @@ def solve_weighted_4_2_1(
         "solve_policy": {
             "target_relative_gap": target_gap,
             "time_limit_seconds": time_limit_seconds,
-            "time_limit_role": "hard_safety_cap",
-            "concurrent_with_australia_exact_primary": True,
+            "time_limit_role": "none" if time_limit_seconds is None else "hard_safety_cap",
+            "concurrent_with_australia_exact_primary": os.environ.get(
+                "WEIGHTED_CONCURRENT_EXACT_PRIMARY", "unknown"
+            ),
         },
         "solve": solve_record,
         "source_n_total_kg": float(n_out_v.sum()),
