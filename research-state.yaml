@@ -1,6 +1,6 @@
 project:
-  title: "EU livestock transfer: lexicographic versus unified weighted MILP and RL"
-  question: "How do lexicographic and normalized weighted multi-objective MILPs trade source nitrogen resolution, source-region livestock composition, destination environment, and movement volume on EU?"
+  title: "Five-region livestock transfer: unified weighted MILP"
+  question: "How does the normalized weighted 4:2:1 MILP trade source nitrogen resolution, source-region livestock composition, destination environment, and movement volume across EU, Australia, China, USA, and Brazil?"
   status: active
   started: "2026-08-25"
   domain: "livestock transfer optimization and reinforcement learning"
@@ -48,7 +48,7 @@ experiments:
   proxy_metric: "On the same EU input: normalized weighted score, source N resolved ratio, source removal-rate proxy, actual remaining-share L1, destination environment score, and animals moved."
   baseline_value: "Lexicographic EU rescored at J=3.643099"
   best_value: "Weighted 4:2:1 EU: certified J=4.706878"
-  total_runs: 2
+  total_runs: 3
   trajectory:
     - experiment_id: "matched_analysis_001"
       hypothesis: "H1/H2/H3"
@@ -64,11 +64,18 @@ experiments:
       delta: "+29.20% J; -0.000543% N; +1550.81% environment; -77.41% proxy loss; +858.28% animals moved"
       wall_time_min: 0.3803
       change_summary: "Single normalized weighted MILP, weights 4:2:1"
+    - experiment_id: "weighted_4_2_1_aus_001"
+      hypothesis: "H7/H8 cross-region extension"
+      metric_value: "weighted J=4.157772 at certified 0.06635% gap"
+      baseline: "EU weighted formulation applied unchanged"
+      delta: "N=99.58135%; proxy loss=0.007875; actual share-L1=0.006749; E=0.190269"
+      wall_time_min: 52.3328
+      change_summary: "Australia unlimited-time weighted MILP; independent validation passed"
 
 outer_loop:
   cycle: 2
   last_direction: "DEEPEN"
-  last_reflection: "The unified normalized 4:2:1 objective is certified and strongly improves its own score with negligible N loss, but exposes missing movement-volume control and failure of the removal-rate proxy near source depletion. Preserve the unregularized run as baseline; test retention or movement regularization next."
+  last_reflection: "The unified normalized 4:2:1 objective is now certified on EU and Australia. Australia does not reproduce EU's severe proxy/actual-share mismatch, suggesting the failure depends on near-depletion and inventory structure. Continue the frozen formulation on China, USA, and Brazil before changing the model."
 
 workspace:
   findings: "findings.md"
