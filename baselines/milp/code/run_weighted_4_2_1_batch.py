@@ -56,6 +56,17 @@ def certified(country):
     )
 
 
+def aborted_by_user(country):
+    marker = RESULTS / f"{country}.aborted.json"
+    if not marker.exists():
+        return False
+    try:
+        state = json.loads(marker.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+    return state.get("country") == country and state.get("status") == "aborted_by_user"
+
+
 def archive_interrupted(country):
     current = RESULTS / "current-run.json"
     if not current.exists():
@@ -97,7 +108,7 @@ def main():
         "WEIGHTED_OUTPUT_DIR": str(RESULTS),
     }
     for country in COUNTRIES:
-        if certified(country):
+        if certified(country) or aborted_by_user(country):
             continue
         archive_interrupted(country)
 
