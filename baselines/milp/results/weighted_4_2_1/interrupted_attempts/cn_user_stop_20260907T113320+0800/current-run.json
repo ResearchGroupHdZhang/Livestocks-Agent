@@ -1,0 +1,12 @@
+{
+  "country": "cn",
+  "pid": 3740291,
+  "started_at": "2026-08-31T15:53:55.380799+08:00",
+  "stop_rule": "relative_mip_gap",
+  "target_gap": 0.001,
+  "time_limit": null,
+  "external_timeout": null,
+  "current_log": "cn_weighted.log",
+  "concurrent_with_exact_primary_at_start": true,
+  "boot_id": "d291a769-9963-4a0a-8d10-e41c3bfefcee"
+}

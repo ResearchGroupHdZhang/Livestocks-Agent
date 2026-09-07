@@ -1,0 +1,20 @@
+{
+  "country": "cn",
+  "dataset": "中国国家尺度更新PB第一步.xlsx",
+  "source_regions": 1335,
+  "destination_regions": 1521,
+  "livestock_kinds": 6,
+  "integer_movement_variables": 10654593,
+  "continuous_structure_variables": 8813,
+  "decision_variables": 10663406,
+  "constraints": 26811,
+  "environment_upper_bound": 35410051488.0,
+  "movement_objective_coefficient_abs_range": {
+    "normalized_min": 1.333284703548754e-10,
+    "normalized_max": 8.909900308295398e-08,
+    "solver_scaled_min": 0.0001333284703548754,
+    "solver_scaled_max": 0.08909900308295399
+  },
+  "build_elapsed_seconds": 794.6228456110111,
+  "peak_rss_mb": 21835.24609375
+}

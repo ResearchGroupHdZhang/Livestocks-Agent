@@ -1,0 +1,21 @@
+feasible solution found by trivial heuristic after 39.5 seconds, objective value 0.000000e+00
+presolving:
+(round 1, fast)       1693154 del vars, 244 del conss, 0 add conss, 7351120 chg bounds, 10 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 2 clqs
+(round 2, fast)       1693154 del vars, 488 del conss, 0 add conss, 7351120 chg bounds, 10 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 2 clqs
+   (1142.0s) probing: 1000/1996 (50.1%) - 0 fixings, 0 aggregations, 167 implications, 0 bound changes
+   (1142.7s) probing: 1001/1996 (50.2%) - 0 fixings, 0 aggregations, 168 implications, 0 bound changes
+   (1142.7s) probing aborted: 1000/1000 successive useless probings
+   (1153.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (1173.5s) no symmetry present (symcode time: 2.89)
+presolving (3 rounds: 3 fast, 1 medium, 1 exhaustive):
+ 1693154 deleted vars, 493 deleted constraints, 0 added constraints, 7351120 tightened bounds, 0 added holes, 10 changed sides, 0 changed coefficients
+ 168 implications, 2 cliques
+presolved problem has 8970252 variables (1996 bin, 8959443 int, 0 impl, 8813 cont) and 26318 constraints
+      2 constraints of type <setppc>
+  26316 constraints of type <linear>
+Presolving Time: 1154.93
+transformed 2/2 original solutions to the transformed problem space
+
+(node 1) unresolved numerical troubles in LP 2 -- using pseudo solution instead (loop 1)
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+ 5665m|     1 |     2 |  1800k|     - |    42G |   0 |8970k|  26k|  26k|   0 |  0 |   0 |   0 | 4.832770e+09 | 0.000000e+00 |    Inf | unknown

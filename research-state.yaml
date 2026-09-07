@@ -48,7 +48,7 @@ experiments:
   proxy_metric: "On the same EU input: normalized weighted score, source N resolved ratio, source removal-rate proxy, actual remaining-share L1, destination environment score, and animals moved."
   baseline_value: "Lexicographic EU rescored at J=3.643099"
   best_value: "Weighted 4:2:1 EU: certified J=4.706878"
-  total_runs: 3
+  total_runs: 4
   trajectory:
     - experiment_id: "matched_analysis_001"
       hypothesis: "H1/H2/H3"
@@ -71,11 +71,18 @@ experiments:
       delta: "N=99.58135%; proxy loss=0.007875; actual share-L1=0.006749; E=0.190269"
       wall_time_min: 52.3328
       change_summary: "Australia unlimited-time weighted MILP; independent validation passed"
+    - experiment_id: "weighted_4_2_1_cn_001"
+      hypothesis: "H7/H8 cross-region extension"
+      metric_value: "aborted_by_user; no certified weighted objective"
+      baseline: "trivial all-zero incumbent only"
+      delta: "scaled primal=0; scaled dual=4.832770e9; gap=Inf; numerical trouble in root LP 2"
+      wall_time_min: 9819.42
+      change_summary: "China stopped after 589,165 seconds and preserved as an uncertified numerical/scalability attempt"
 
 outer_loop:
   cycle: 2
   last_direction: "DEEPEN"
-  last_reflection: "The unified normalized 4:2:1 objective is now certified on EU and Australia. Australia does not reproduce EU's severe proxy/actual-share mismatch, suggesting the failure depends on near-depletion and inventory structure. Continue the frozen formulation on China, USA, and Brazil before changing the model."
+  last_reflection: "The unified normalized 4:2:1 objective is certified on EU and Australia. China was explicitly stopped after 589,165 seconds with only the trivial zero incumbent, an infinite gap, and root-LP numerical trouble; it is not a solved outcome and will not auto-retry. Continue the frozen formulation on USA and Brazil."
 
 workspace:
   findings: "findings.md"
