@@ -109,8 +109,34 @@ def demo(output_root):
     print(summary)
 
 
+def test_positive_full_warm_start(output_root):
+    os.environ["WEIGHTED_OUTPUT_DIR"] = str(output_root)
+    seed = {
+        "source_index": 0,
+        "destination_index": 0,
+        "species_index": 0,
+        "amount": 10,
+        "weighted_objective": 4 * (10 / 75) - 2 * 0.05 + 30 / 450,
+    }
+    summary = solve_weighted_4_2_1(
+        "warm",
+        "toy",
+        toy_data(),
+        time_limit_seconds=60,
+        target_gap=0,
+        solver_msg=False,
+        warm_start_seed=seed,
+    )
+    assert summary["warm_start"]["weighted_objective"] > 0, summary
+    assert summary["warm_start"]["all_model_variables_initialized"], summary
+    log = (output_root / "warm_weighted.log").read_text(encoding="utf-8")
+    assert "objective value 5.000000e+05" in log, log
+    assert "completion of a partial solution failed" not in log, log
+
+
 if __name__ == "__main__":
     test_termination_policy()
     os.environ["WEIGHTED_OUTPUT_DIR"] = sys.argv[1]
     test_unlimited_solver_configuration()
     demo(Path(sys.argv[1]))
+    test_positive_full_warm_start(Path(sys.argv[1]))

@@ -25,12 +25,17 @@ def main():
     input_started = perf_counter()
     data = load_datas(country, FILES[country])
     input_elapsed = perf_counter() - input_started
+    seed_path = os.environ.get("WEIGHTED_WARM_START")
+    warm_start_seed = (
+        json.loads(Path(seed_path).read_text(encoding="utf-8")) if seed_path else None
+    )
     summary = solve_weighted_4_2_1(
         country,
         FILES[country],
         data,
         input_load_elapsed_seconds=input_elapsed,
         preflight_only=preflight_only,
+        warm_start_seed=warm_start_seed,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 

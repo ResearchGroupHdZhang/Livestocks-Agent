@@ -36,6 +36,7 @@ def solve_weighted_4_2_1(
     target_gap=1e-3,
     solver_msg=True,
     preflight_only=False,
+    warm_start_seed=None,
 ):
     run_started = perf_counter()
     build_started = perf_counter()
@@ -86,6 +87,7 @@ def solve_weighted_4_2_1(
         for k in range(n_kind)
         if a_out[i, k] > 0 and a_in[j, k] > 0
     ]
+    move_key_set = set(move_keys)
     route_keys = sorted({(i, j) for i, j, _k in move_keys})
     moves = {
         key: pulp.LpVariable(
@@ -129,6 +131,7 @@ def solve_weighted_4_2_1(
         for i in range(n_out_count)
     }
     deviations_scaled = []
+    deviation_by_source_kind = {}
     source_kind_counts = np.zeros(n_out_count, dtype=np.int64)
     for i in range(n_out_count):
         source_kinds = np.flatnonzero(a_out[i] > 0)
@@ -144,6 +147,7 @@ def solve_weighted_4_2_1(
             problem += deviation >= scaled_rate - source_fraction_scaled[i]
             problem += deviation >= source_fraction_scaled[i] - scaled_rate
             deviations_scaled.append(deviation * (1.0 / len(source_kinds)))
+            deviation_by_source_kind[i, k] = deviation
 
     resolved_n_scaled = pulp.lpSum(
         nc_out[i, k] / physical_scale * variable
@@ -187,6 +191,82 @@ def solve_weighted_4_2_1(
     # Scale the whole objective uniformly so small per-animal normalized
     # coefficients are not discarded by solver numerical tolerances.
     problem.setObjective(OBJECTIVE_SCALE * unified_objective)
+
+    warm_start_record = None
+    if warm_start_seed is not None:
+        seed_key = tuple(int(warm_start_seed[name]) for name in (
+            "source_index", "destination_index", "species_index"
+        ))
+        seed_amount = int(warm_start_seed["amount"])
+        if seed_key not in move_key_set or seed_amount <= 0:
+            raise ValueError(f"invalid warm-start route or amount: {seed_key}, {seed_amount}")
+
+        seed_moved_out = np.zeros((n_out_count, n_kind), dtype=np.int64)
+        seed_moved_in = np.zeros((n_in_count, n_kind), dtype=np.int64)
+        seed_moved_out[seed_key[0], seed_key[2]] = seed_amount
+        seed_moved_in[seed_key[1], seed_key[2]] = seed_amount
+        seed_final_n_out = n_out_v - (seed_moved_out * nc_out).sum(axis=1)
+        seed_final_n_in = n_in_v + (seed_moved_in * nc_in).sum(axis=1)
+        seed_final_ammonia_in = ammonia_in_v - (seed_moved_in * ac_in).sum(axis=1)
+        seed_source_n_removed = (seed_moved_out * nc_out).sum(axis=1)
+        if not (
+            (seed_moved_out <= a_out).all()
+            and (
+                seed_source_n_removed
+                <= np.maximum(0.0, n_out_v - source_n_guard_kg) + 1e-6
+            ).all()
+            and (seed_final_n_in <= 1e-6).all()
+            and (seed_final_ammonia_in >= -1e-6).all()
+        ):
+            raise ValueError("warm-start seed fails an independently recomputed physical constraint")
+
+        seed_reference = np.zeros(n_out_count)
+        seed_structure_loss = np.zeros(n_out_count)
+        for i in range(n_out_count):
+            present = a_out[i] > 0
+            rates = seed_moved_out[i, present] / a_out[i, present]
+            seed_reference[i] = float(np.median(rates))
+            seed_structure_loss[i] = float(np.abs(rates - seed_reference[i]).mean())
+        seed_n_normalized = float((seed_moved_out * nc_out).sum() / n_out_v.sum())
+        seed_environment_score = float((seed_moved_in * environment_coefficients[:, None]).sum())
+        seed_environment_normalized = seed_environment_score / environment_upper_bound
+        seed_structure_normalized = float(seed_structure_loss.mean())
+        seed_objective = (
+            WEIGHTS["source_n"] * seed_n_normalized
+            - WEIGHTS["source_composition"] * seed_structure_normalized
+            + WEIGHTS["environment"] * seed_environment_normalized
+        )
+        if seed_objective <= 0:
+            raise ValueError(f"warm-start seed objective must be positive, got {seed_objective}")
+        expected_objective = warm_start_seed.get("weighted_objective")
+        if expected_objective is not None and not np.isclose(
+            seed_objective, float(expected_objective), rtol=1e-9, atol=1e-12
+        ):
+            raise ValueError(
+                f"warm-start objective mismatch: {seed_objective} != {expected_objective}"
+            )
+
+        for key, variable in moves.items():
+            variable.setInitialValue(seed_amount if key == seed_key else 0)
+        for i, variable in source_fraction_scaled.items():
+            variable.setInitialValue(seed_reference[i] * structure_scale)
+        for (i, k), variable in deviation_by_source_kind.items():
+            rate = seed_moved_out[i, k] / a_out[i, k]
+            variable.setInitialValue(abs(rate - seed_reference[i]) * structure_scale)
+        warm_start_record = {
+            "kind": "complete_one_route_feasible_solution",
+            "source_index": seed_key[0],
+            "destination_index": seed_key[1],
+            "species_index": seed_key[2],
+            "amount": seed_amount,
+            "source_n_normalized": seed_n_normalized,
+            "source_structure_loss_normalized": seed_structure_normalized,
+            "environment_normalized": seed_environment_normalized,
+            "weighted_objective": seed_objective,
+            "solver_scaled_objective": seed_objective * OBJECTIVE_SCALE,
+            "physical_constraints_recomputed": True,
+            "all_model_variables_initialized": True,
+        }
     build_elapsed_seconds = perf_counter() - build_started
     decision_variables = len(problem.variables())
     constraints = len(problem.constraints)
@@ -227,6 +307,8 @@ def solve_weighted_4_2_1(
         "gapRel": target_gap,
         "options": ["numerics/feastol=1e-7"],
     }
+    if warm_start_record is not None:
+        solver_kwargs["warmStart"] = True
     if time_limit_seconds is not None:
         solver_kwargs["timeLimit"] = time_limit_seconds
     solver = pulp.SCIP_PY(**solver_kwargs)
@@ -387,6 +469,7 @@ def solve_weighted_4_2_1(
                 "WEIGHTED_CONCURRENT_EXACT_PRIMARY", "unknown"
             ),
         },
+        "warm_start": warm_start_record,
         "solve": solve_record,
         "source_n_total_kg": float(n_out_v.sum()),
         "source_n_resolved_kg": resolved_n_kg,
