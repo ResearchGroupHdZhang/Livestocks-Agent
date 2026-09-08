@@ -48,7 +48,7 @@ experiments:
   proxy_metric: "On the same EU input: normalized weighted score, source N resolved ratio, source removal-rate proxy, actual remaining-share L1, destination environment score, and animals moved."
   baseline_value: "Lexicographic EU rescored at J=3.643099"
   best_value: "Weighted 4:2:1 EU: certified J=4.706878"
-  total_runs: 4
+  total_runs: 5
   trajectory:
     - experiment_id: "matched_analysis_001"
       hypothesis: "H1/H2/H3"
@@ -78,11 +78,18 @@ experiments:
       delta: "scaled primal=0; scaled dual=4.832770e9; gap=Inf; numerical trouble in root LP 2"
       wall_time_min: 9819.42
       change_summary: "China stopped after 589,165 seconds and preserved as an uncertified numerical/scalability attempt"
+    - experiment_id: "weighted_4_2_1_usa_001"
+      hypothesis: "H7/H8 cross-region extension"
+      metric_value: "weighted J=4.619852 at certified 0.05723% gap"
+      baseline: "EU weighted formulation applied unchanged"
+      delta: "N=99.99680%; proxy loss=0.002655; actual share-L1=0.179173; E=0.625289"
+      wall_time_min: 1291.0811
+      change_summary: "USA unlimited-time weighted MILP; independent validation passed"
 
 outer_loop:
   cycle: 2
   last_direction: "DEEPEN"
-  last_reflection: "The unified normalized 4:2:1 objective is certified on EU and Australia. China was explicitly stopped after 589,165 seconds with only the trivial zero incumbent, an infinite gap, and root-LP numerical trouble; it is not a solved outcome and will not auto-retry. Continue the frozen formulation on USA and Brazil."
+  last_reflection: "The unified normalized 4:2:1 objective is certified on EU, Australia, and USA. China remains an explicitly aborted uncertified attempt. USA reached its 0.1% certificate after 21.3 solver hours and independent validation passed; Brazil is now running the frozen formulation."
 
 workspace:
   findings: "findings.md"

@@ -1,0 +1,104 @@
+{
+  "country": "usa",
+  "dataset": "美国数据国家尺度第一步1223.xlsx",
+  "model": "integer_unified_weighted_4_2_1",
+  "objectives": [
+    "maximize_source_n_resolved",
+    "minimize_source_composition_change",
+    "maximize_destination_environment"
+  ],
+  "weights": {
+    "source_n": 4.0,
+    "source_composition": 2.0,
+    "environment": 1.0
+  },
+  "solver_objective_scale": 1000000.0,
+  "normalization": {
+    "source_n_denominator_kg": 2932808220.0129137,
+    "source_composition_denominator": "equal-source mean of equal-species mean absolute removal-rate deviations",
+    "environment_upper_bound": 21419700861.0,
+    "environment_best_coefficient_by_kind": [
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0
+    ]
+  },
+  "movement_objective_coefficient_abs_range": {
+    "normalized_min": 4.66863733851178e-11,
+    "normalized_max": 1.2763354314775847e-07,
+    "solver_scaled_min": 4.66863733851178e-05,
+    "solver_scaled_max": 0.12763354314775846
+  },
+  "environment_internal_weights": [
+    2,
+    1
+  ],
+  "source_n_numeric_guard_kg_per_region": 1.0,
+  "solve_policy": {
+    "target_relative_gap": 0.001,
+    "time_limit_seconds": null,
+    "time_limit_role": "none",
+    "concurrent_with_australia_exact_primary": "true"
+  },
+  "solve": {
+    "status": "gaplimit",
+    "termination_reason": "gap_reached",
+    "certified": true,
+    "target_gap": 0.001,
+    "gap": 0.0005723411785883019,
+    "solutions": 4,
+    "primal_bound": 4619851.9119715355,
+    "dual_bound": 4622496.043459737,
+    "nodes": 1,
+    "solver_seconds": 76736.514806,
+    "solve_elapsed_seconds": 76877.79676516901
+  },
+  "source_n_total_kg": 2932808220.0129137,
+  "source_n_resolved_kg": 2932714497.940105,
+  "source_n_resolved_ratio": 0.9999680435726519,
+  "source_n_remaining_kg": 93722.07280924599,
+  "source_structure_loss_normalized": 0.002654638310106203,
+  "source_structure_loss_max": 0.2501482465507635,
+  "source_share_l1_change_mean": 0.17917296046842096,
+  "source_share_l1_change_max": 1.9999985595560206,
+  "source_reference_fraction_mean": 0.8799666592416082,
+  "environment_score": 13393503638.0,
+  "environment_score_normalized": 0.6252890143011414,
+  "weighted_contributions": {
+    "source_n": 3.9998721742906076,
+    "source_composition": -0.005309276620212406,
+    "environment": 0.6252890143011414
+  },
+  "weighted_objective": 4.619851911971536,
+  "solver_objective": 4.619851911971523,
+  "destination_ammonia_used_kg": 1477048479.0902274,
+  "source_ammonia_removed_kg": 1477048479.0902274,
+  "total_moved": 5778543686,
+  "moved_by_kind": [
+    22571814,
+    4985205,
+    29039536,
+    2629858,
+    5456938775,
+    262378498
+  ],
+  "nonzero_routes": 6878,
+  "allowed_route_species": 7489095,
+  "decision_variables": 7495512,
+  "integer_movement_variables": 7489095,
+  "continuous_structure_variables": 6417,
+  "constraints": 20793,
+  "result_shape": [
+    1137,
+    1908,
+    6
+  ],
+  "input_load_elapsed_seconds": 0.710218592081219,
+  "build_elapsed_seconds": 553.0967960209819,
+  "serialization_elapsed_seconds": 8.115567601053044,
+  "total_elapsed_seconds": 77464.86527118308,
+  "peak_rss_mb": 56137.86328125
+}

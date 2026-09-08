@@ -1,0 +1,20 @@
+{
+  "country": "usa",
+  "dataset": "美国数据国家尺度第一步1223.xlsx",
+  "source_regions": 1137,
+  "destination_regions": 1908,
+  "livestock_kinds": 6,
+  "integer_movement_variables": 7489095,
+  "continuous_structure_variables": 6417,
+  "decision_variables": 7495512,
+  "constraints": 20793,
+  "environment_upper_bound": 21419700861.0,
+  "movement_objective_coefficient_abs_range": {
+    "normalized_min": 4.66863733851178e-11,
+    "normalized_max": 1.2763354314775847e-07,
+    "solver_scaled_min": 4.66863733851178e-05,
+    "solver_scaled_max": 0.12763354314775846
+  },
+  "build_elapsed_seconds": 547.701318710926,
+  "peak_rss_mb": 16580.41015625
+}
