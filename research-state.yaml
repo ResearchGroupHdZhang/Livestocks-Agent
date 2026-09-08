@@ -48,7 +48,7 @@ experiments:
   proxy_metric: "On the same EU input: normalized weighted score, source N resolved ratio, source removal-rate proxy, actual remaining-share L1, destination environment score, and animals moved."
   baseline_value: "Lexicographic EU rescored at J=3.643099"
   best_value: "Weighted 4:2:1 EU: certified J=4.706878"
-  total_runs: 5
+  total_runs: 6
   trajectory:
     - experiment_id: "matched_analysis_001"
       hypothesis: "H1/H2/H3"
@@ -85,11 +85,23 @@ experiments:
       delta: "N=99.99680%; proxy loss=0.002655; actual share-L1=0.179173; E=0.625289"
       wall_time_min: 1291.0811
       change_summary: "USA unlimited-time weighted MILP; independent validation passed"
+    - experiment_id: "paper_ppo_vs_weighted_milp_001"
+      hypothesis: "H3"
+      status: "mixed"
+      analysis_type: "confirmatory_matched_input_rescoring"
+      countries: ["eu", "usa"]
+      result: "Certified MILP has higher post-hoc J, N resolution, environment score, and proxy quality; PPO moves fewer animals/routes and has higher N per moved animal and lower actual share-L1. Archived PPO has small source-N guard residuals."
+      primary_values:
+        eu_ppo_J: 3.964135641935177
+        eu_milp_J: 4.706877879733795
+        usa_ppo_J: 4.243899563008606
+        usa_milp_J: 4.619851911971536
+      change_summary: "Input-matched paper PPO v9 rescored with the same physical evaluator as certified weighted MILP"
 
 outer_loop:
-  cycle: 2
+  cycle: 3
   last_direction: "DEEPEN"
-  last_reflection: "The unified normalized 4:2:1 objective is certified on EU, Australia, and USA. The first China attempt was not evidence of infeasibility: it lacked an explicit nonzero start and stalled with root-LP numerical trouble. A newly authorized no-time-limit China restart now has a solver-accepted positive full warm start; Brazil continues independently."
+  last_reflection: "Matched-input rescoring shows certified MILP dominates paper PPO on the global MILP score, while PPO is sparser and more movement-efficient and better on actual source share-L1. Native objectives differ, and archived PPO has sub-1-kg source-N residuals, so feasibility repair or tolerance preregistration plus runtime evidence is needed before drafting the reviewer claim."
 
 workspace:
   findings: "findings.md"
