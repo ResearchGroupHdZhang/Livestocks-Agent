@@ -21,6 +21,9 @@ def main():
     assert abs(supplied["source_structure_loss_normalized"] - 0.0625) < 1e-12
     assert fitted["sources_fully_depleted"] == 0
     assert fitted["sources_remaining_below_10pct"] == 0
+    assert set(MODULE.CASES) == {"eu", "usa", "aus"}
+    assert MODULE.CASES["aus"]["ppo_version"] == "v8"
+    assert MODULE.CASES["aus"]["evidence_tier"] == "version_qualified_robustness"
     print("paper comparison metric test: PASS")
 
 

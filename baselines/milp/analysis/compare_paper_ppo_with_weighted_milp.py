@@ -20,11 +20,19 @@ CASES = {
         "dataset": "欧盟更新PB后第一步.xlsx",
         "ppo_version": "v9",
         "ppo_root": REPO / "results" / "v9" / "eu",
+        "evidence_tier": "confirmatory_same_ppo_version",
     },
     "usa": {
         "dataset": "美国数据国家尺度第一步1223.xlsx",
         "ppo_version": "v9",
         "ppo_root": REPO / "results" / "v9" / "usa",
+        "evidence_tier": "confirmatory_same_ppo_version",
+    },
+    "aus": {
+        "dataset": "澳大利亚空间优化更新PB第一步.xlsx",
+        "ppo_version": "v8",
+        "ppo_root": REPO / "results" / "v8" / "aus",
+        "evidence_tier": "version_qualified_robustness",
     },
 }
 
@@ -246,6 +254,7 @@ def main():
         results[country]["ppo"]["provenance"] = {
             "version": case["ppo_version"],
             "root": str(ppo_root.relative_to(REPO)),
+            "evidence_tier": case["evidence_tier"],
             "native_reward": "4*destination_ammonia_reward + 2*inverse_sensitivity + inverse_relative_pm25 per accepted action",
         }
         results[country]["milp"]["provenance"] = {
@@ -262,8 +271,10 @@ def main():
     rows = comparison_rows(results)
     report = {
         "scope": {
-            "status": "confirmatory_matched_input_rescoring",
+            "status": "matched_input_rescoring_with_version_qualified_australia",
             "countries": list(CASES),
+            "confirmatory_same_version": ["eu", "usa"],
+            "version_qualified_robustness": ["aus"],
             "ppo_native_objective": "action-local 4:2:1 reward over destination ammonia, sensitivity, and PM2.5",
             "milp_native_objective": "global 4*N_hat - 2*source_composition_proxy + E_hat",
             "warning": "Native objectives differ; the common 4:2:1 score is a post-hoc MILP-objective rescore for PPO, not PPO training reward.",

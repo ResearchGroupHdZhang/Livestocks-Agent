@@ -48,7 +48,7 @@ experiments:
   proxy_metric: "On the same EU input: normalized weighted score, source N resolved ratio, source removal-rate proxy, actual remaining-share L1, destination environment score, and animals moved."
   baseline_value: "Lexicographic EU rescored at J=3.643099"
   best_value: "Weighted 4:2:1 EU: certified J=4.706878"
-  total_runs: 6
+  total_runs: 7
   trajectory:
     - experiment_id: "matched_analysis_001"
       hypothesis: "H1/H2/H3"
@@ -97,11 +97,18 @@ experiments:
         usa_ppo_J: 4.243899563008606
         usa_milp_J: 4.619851911971536
       change_summary: "Input-matched paper PPO v9 rescored with the same physical evaluator as certified weighted MILP"
+    - experiment_id: "paper_ppo_v8_vs_weighted_milp_aus_001"
+      hypothesis: "H3"
+      status: "mixed"
+      analysis_type: "version_qualified_robustness"
+      country: "aus"
+      result: "MILP J=4.157772 vs PPO v8 J=3.691839; PPO moves fewer animals/routes and resolves more N per moved animal, while MILP also wins actual share-L1 in Australia."
+      change_summary: "Input-matched Australia PPO v8 robustness comparison; not pooled as a same-version v9 result"
 
 outer_loop:
   cycle: 3
   last_direction: "DEEPEN"
-  last_reflection: "Matched-input rescoring shows certified MILP dominates paper PPO on the global MILP score, while PPO is sparser and more movement-efficient and better on actual source share-L1. Native objectives differ, and archived PPO has sub-1-kg source-N residuals, so feasibility repair or tolerance preregistration plus runtime evidence is needed before drafting the reviewer claim."
+  last_reflection: "Matched-input rescoring across EU/USA v9 and version-qualified Australia v8 shows certified MILP dominates on the global MILP score, while PPO is consistently sparser and more movement-efficient. Actual source share-L1 favors PPO in EU/USA but MILP in Australia. Archived PPO has sub-1-kg source-N residuals, so feasibility repair or tolerance preregistration plus runtime evidence is needed before final reviewer claims."
 
 workspace:
   findings: "findings.md"

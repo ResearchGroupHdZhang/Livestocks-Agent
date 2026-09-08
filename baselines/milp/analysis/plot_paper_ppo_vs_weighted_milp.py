@@ -12,8 +12,8 @@ LABELS = {"ppo": "Paper PPO", "milp": "Certified MILP"}
 
 def main():
     report = json.loads((ROOT / "analysis" / "paper_ppo_vs_weighted_milp.json").read_text(encoding="utf-8"))
-    countries = ["eu", "usa"]
-    display = {"eu": "EU", "usa": "USA"}
+    countries = ["eu", "usa", "aus"]
+    display = {"eu": "EU\n(v9)", "usa": "USA\n(v9)", "aus": "Australia\n(v8*)"}
     figure, axes = plt.subplots(2, 2, figsize=(10.5, 7.4))
 
     panels = [
@@ -51,13 +51,14 @@ def main():
     figure.suptitle("Paper-method PPO versus certified weighted MILP\nMatched first-stage national inputs; independently recomputed outcomes", fontsize=14, weight="bold")
     figure.text(
         0.5,
-        0.015,
+        0.025,
         "Caution: PPO's native action-local reward differs from the global MILP objective. J is a post-hoc common rescore.",
         ha="center",
         fontsize=9,
         color="#7F1D1D",
     )
-    figure.tight_layout(rect=(0, 0.045, 1, 0.87))
+    figure.text(0.5, 0.008, "* Australia is an input-matched, version-qualified PPO v8 robustness comparison.", ha="center", fontsize=8, color="#475569")
+    figure.tight_layout(rect=(0, 0.06, 1, 0.87))
     output = ROOT / "to_human" / "paper_ppo_vs_weighted_milp.png"
     figure.savefig(output, dpi=220, bbox_inches="tight")
     print(output)

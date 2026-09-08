@@ -27,7 +27,7 @@
 
 1. 感谢审稿人提出 exact/optimization baseline 的要求。
 2. 说明新增 normalized weighted MILP，并明确它与论文 action-local reward 的差异。
-3. 报告 EU/美国认证结果和同输入独立重算表。
+3. 报告 EU/美国同版本结果，并将澳大利亚 PPO v8 明确列为版本限定稳健性结果。
 4. 坦诚说明 MILP 在其目标 $J$ 上更优。
 5. 说明 PPO 的互补优势：更少移动、更少路线、更高 N/animal、更低真实 share-L1。
 6. 把结论收缩为“quality certificate versus scalable solution generation”。
@@ -40,7 +40,7 @@
 >
 > The two methods do not optimize identical native objectives. PPO uses an action-local reward, $4R_{NH_3}+2R_{sens}+R_{PM2.5}$, when selecting a source–destination pair, while a local linear allocator determines the livestock quantities. The MILP directly optimizes the global objective $J=4\hat N-2\hat L+\hat E$, where $\hat N$ is normalized source-N resolution, $\hat L$ is a source-composition proxy loss, and $\hat E$ is the normalized destination environmental score. We therefore report PPO's value of $J$ only as a post-hoc common rescore, not as its training reward.
 >
-> As expected for a method directly optimizing this objective, the 0.1%-gap-certified MILP achieved a higher $J$ than PPO: 4.7069 versus 3.9641 in the EU and 4.6199 versus 4.2439 in the United States. It also achieved higher source-N resolution (99.9995% versus 93.7148% in the EU; 99.9968% versus 98.3531% in the United States) and higher normalized environmental scores. However, PPO generated substantially sparser and more movement-efficient layouts. It moved 26.1% and 29.4% fewer animals, used 59.3% and 46.9% fewer nonzero routes, and resolved 26.8% and 39.3% more N per moved animal in the EU and United States, respectively. PPO also produced lower actual source-composition share changes, whereas the MILP's optimized linear composition proxy did not always track this physical metric near source depletion.
+> As expected for a method directly optimizing this objective, the 0.1%-gap-certified MILP achieved a higher $J$ than PPO: 4.7069 versus 3.9641 in the EU and 4.6199 versus 4.2439 in the United States. An input-matched, version-qualified Australian comparison (PPO v8) showed the same direction, with 4.1578 versus 3.6918. MILP also achieved higher source-N resolution and higher normalized environmental scores in all three cases. However, PPO generated substantially sparser and more movement-efficient layouts: it moved 26.1%, 29.4%, and 42.2% fewer animals and resolved 26.8%, 39.3%, and 66.8% more N per moved animal in the EU, United States, and Australia, respectively. PPO produced lower actual source-composition share changes in the EU and United States, whereas Australia favored MILP on this metric; this variation confirms that the optimized linear proxy does not uniformly track the physical share metric near source depletion.
 >
 > Our independent audit verified exact species conservation and route-to-inventory consistency for both methods. The archived PPO layouts satisfy destination N and ammonia limits under the common scale-aware tolerance, but 10 EU and 88 U.S. source rows exceed the MILP's explicit 1-kg source-N safety guard; the maximum residual is below 1 kg in both cases. We now report this distinction explicitly and do not label the archived PPO layouts as strictly equivalent-feasible until the residuals are repaired or a method-independent numerical tolerance is preregistered.
 >
@@ -55,6 +55,6 @@
 ## 尚未写死到回复中的部分
 
 - PPO 时间优势：等待严格计时。
-- 澳大利亚：作为 v8 版本限定补充结果，而非与 v9 混成单一主表。
+- 澳大利亚：已作为 v8 版本限定补充结果，不能与 v9 混成无条件同版本均值。
 - 中国/巴西：等待 MILP 证书；未认证结果只用于规模讨论。
 - PPO source-N 修复后的具体数值：修复完成前不填。

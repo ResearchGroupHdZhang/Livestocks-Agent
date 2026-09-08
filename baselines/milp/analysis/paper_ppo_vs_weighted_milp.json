@@ -1,9 +1,17 @@
 {
   "scope": {
-    "status": "confirmatory_matched_input_rescoring",
+    "status": "matched_input_rescoring_with_version_qualified_australia",
     "countries": [
       "eu",
+      "usa",
+      "aus"
+    ],
+    "confirmatory_same_version": [
+      "eu",
       "usa"
+    ],
+    "version_qualified_robustness": [
+      "aus"
     ],
     "ppo_native_objective": "action-local 4:2:1 reward over destination ammonia, sensitivity, and PM2.5",
     "milp_native_objective": "global 4*N_hat - 2*source_composition_proxy + E_hat",
@@ -75,6 +83,7 @@
         "provenance": {
           "version": "v9",
           "root": "results/v9/eu",
+          "evidence_tier": "confirmatory_same_ppo_version",
           "native_reward": "4*destination_ammonia_reward + 2*inverse_sensitivity + inverse_relative_pm25 per accepted action"
         }
       },
@@ -229,6 +238,7 @@
         "provenance": {
           "version": "v9",
           "root": "results/v9/usa",
+          "evidence_tier": "confirmatory_same_ppo_version",
           "native_reward": "4*destination_ammonia_reward + 2*inverse_sensitivity + inverse_relative_pm25 per accepted action"
         }
       },
@@ -314,6 +324,161 @@
             "serialization_elapsed_seconds": 8.115567601053044,
             "total_elapsed_seconds": 77464.86527118308,
             "peak_rss_mb": 56137.86328125
+          }
+        }
+      }
+    },
+    "aus": {
+      "ppo": {
+        "country": "aus",
+        "method": "ppo",
+        "checks": {
+          "row_counts": true,
+          "id_order": true,
+          "inventory_nonnegative": true,
+          "integer_nonnegative_aggregate_moves": true,
+          "species_conservation": true,
+          "route_ids_valid": true,
+          "route_integer_nonnegative": true,
+          "routes_recompute_outbound": true,
+          "routes_recompute_inbound": true,
+          "destination_species_structure": true,
+          "source_n_within_scale_tolerance": false,
+          "destination_n_within_scale_tolerance": true,
+          "destination_ammonia_within_scale_tolerance": true,
+          "normalized_components_in_unit_interval": true
+        },
+        "physically_validated": false,
+        "metrics": {
+          "source_n_total_kg": 1084168050.4344764,
+          "source_n_resolved_kg": 1041697471.874793,
+          "source_n_resolved_ratio": 0.9608265724647914,
+          "source_n_remaining_kg": 42470578.55968344,
+          "source_n_90pct_target_rate": 0.9161793372319688,
+          "source_n_strict_negative_rows": 151,
+          "source_n_scale_tolerance_violations": 55,
+          "source_n_max_overshoot_kg": 0.9949488346464932,
+          "destination_n_strict_positive_rows": 3,
+          "destination_n_scale_tolerance_violations": 0,
+          "destination_n_max_excess_kg": 0.007183666690252721,
+          "destination_ammonia_strict_negative_rows": 4,
+          "destination_ammonia_scale_tolerance_violations": 0,
+          "destination_ammonia_max_excess_kg": 0.006480008065409493,
+          "sensitivity_reward": 57207074.0,
+          "pm25_reward": 18011211.0,
+          "environment_score": 132425359.0,
+          "environment_score_normalized": 0.09813511986269227,
+          "weighted_objective_4_2_1_posthoc": 3.6918393219150705,
+          "total_moved": 57377515,
+          "n_resolved_per_moved_animal_kg": 18.15515140163866,
+          "environment_score_per_moved_animal": 2.3079660908981507,
+          "nonzero_routes": 1124,
+          "archived_route_reward_sum": 7350.464711438042,
+          "moved_by_kind": {
+            "num Dairy cattle(头）": 446921,
+            "num Meat cattle(头）": 10593861,
+            "num Sheep(头）": 27998020,
+            "num Pigs(头）": 986987,
+            "num County broiler(只）": 12199727,
+            "num County Layers(只）": 5151999
+          },
+          "source_structure_loss_normalized": 0.12480104390339368,
+          "source_structure_loss_max": 0.5,
+          "source_share_l1_change_mean": 0.2380051770324003,
+          "source_share_l1_change_max": 1.9982672838436595,
+          "sources_remaining_below_10pct": 145,
+          "sources_fully_depleted": 61,
+          "reference_removal_fraction_mean": 0.6672057726555349
+        },
+        "provenance": {
+          "version": "v8",
+          "root": "results/v8/aus",
+          "evidence_tier": "version_qualified_robustness",
+          "native_reward": "4*destination_ammonia_reward + 2*inverse_sensitivity + inverse_relative_pm25 per accepted action"
+        }
+      },
+      "milp": {
+        "country": "aus",
+        "method": "milp",
+        "checks": {
+          "row_counts": true,
+          "id_order": true,
+          "inventory_nonnegative": true,
+          "integer_nonnegative_aggregate_moves": true,
+          "species_conservation": true,
+          "route_ids_valid": true,
+          "route_integer_nonnegative": true,
+          "routes_recompute_outbound": true,
+          "routes_recompute_inbound": true,
+          "destination_species_structure": true,
+          "source_n_within_scale_tolerance": true,
+          "destination_n_within_scale_tolerance": true,
+          "destination_ammonia_within_scale_tolerance": true,
+          "normalized_components_in_unit_interval": true
+        },
+        "physically_validated": true,
+        "metrics": {
+          "source_n_total_kg": 1084168050.4344764,
+          "source_n_resolved_kg": 1079629204.4418116,
+          "source_n_resolved_ratio": 0.9958135217221668,
+          "source_n_remaining_kg": 4538845.992665091,
+          "source_n_90pct_target_rate": 0.9376218323586745,
+          "source_n_strict_negative_rows": 0,
+          "source_n_scale_tolerance_violations": 0,
+          "source_n_max_overshoot_kg": 0.0,
+          "destination_n_strict_positive_rows": 0,
+          "destination_n_scale_tolerance_violations": 0,
+          "destination_n_max_excess_kg": 0.0,
+          "destination_ammonia_strict_negative_rows": 0,
+          "destination_ammonia_scale_tolerance_violations": 0,
+          "destination_ammonia_max_excess_kg": 0.0,
+          "sensitivity_reward": 99075188.0,
+          "pm25_reward": 58601607.0,
+          "environment_score": 256751983.0,
+          "environment_score_normalized": 0.19026859218625136,
+          "weighted_objective_4_2_1_posthoc": 4.157771735016991,
+          "total_moved": 99195749,
+          "n_resolved_per_moved_animal_kg": 10.883825318379435,
+          "environment_score_per_moved_animal": 2.588336552607713,
+          "nonzero_routes": 1977,
+          "archived_route_reward_sum": null,
+          "moved_by_kind": {
+            "num Dairy cattle(头）": 769160,
+            "num Meat cattle(头）": 11092656,
+            "num Sheep(头）": 27270365,
+            "num Pigs(头）": 1220770,
+            "num County broiler(只）": 50106842,
+            "num County Layers(只）": 8735956
+          },
+          "source_structure_loss_normalized": 0.007875472028963684,
+          "source_structure_loss_max": 0.25,
+          "source_share_l1_change_mean": 0.0067488710502024325,
+          "source_share_l1_change_max": 0.8313950666206554,
+          "sources_remaining_below_10pct": 155,
+          "sources_fully_depleted": 56,
+          "reference_removal_fraction_mean": 0.6840935014669144
+        },
+        "provenance": {
+          "root": "baselines/milp/results/weighted_4_2_1/aus",
+          "solver": {
+            "status": "gaplimit",
+            "termination_reason": "gap_reached",
+            "certified": true,
+            "target_gap": 0.001,
+            "gap": 0.0006634544309520113,
+            "solutions": 8,
+            "primal_bound": 4157771.735016986,
+            "dual_bound": 4160530.22709747,
+            "nodes": 1,
+            "solver_seconds": 3104.21188,
+            "solve_elapsed_seconds": 3110.976291670988
+          },
+          "timing": {
+            "input_load_elapsed_seconds": 0.3635498700023163,
+            "build_elapsed_seconds": 26.586474643001566,
+            "serialization_elapsed_seconds": 1.2546421400038525,
+            "total_elapsed_seconds": 3139.96997363001,
+            "peak_rss_mb": 4018.18359375
           }
         }
       }
@@ -859,6 +1024,276 @@
       "ppo_minus_milp": -0.3759523489629304,
       "ppo_over_milp": 0.9186224242407607,
       "percent_change_ppo_vs_milp": -8.137757575923933
+    },
+    {
+      "country": "aus",
+      "metric": "destination_ammonia_max_excess_kg",
+      "ppo": 0.006480008065409493,
+      "milp": 0.0,
+      "ppo_minus_milp": 0.006480008065409493,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "destination_ammonia_scale_tolerance_violations",
+      "ppo": 0,
+      "milp": 0,
+      "ppo_minus_milp": 0,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "destination_ammonia_strict_negative_rows",
+      "ppo": 4,
+      "milp": 0,
+      "ppo_minus_milp": 4,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "destination_n_max_excess_kg",
+      "ppo": 0.007183666690252721,
+      "milp": 0.0,
+      "ppo_minus_milp": 0.007183666690252721,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "destination_n_scale_tolerance_violations",
+      "ppo": 0,
+      "milp": 0,
+      "ppo_minus_milp": 0,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "destination_n_strict_positive_rows",
+      "ppo": 3,
+      "milp": 0,
+      "ppo_minus_milp": 3,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "environment_score",
+      "ppo": 132425359.0,
+      "milp": 256751983.0,
+      "ppo_minus_milp": -124326624.0,
+      "ppo_over_milp": 0.5157715140217631,
+      "percent_change_ppo_vs_milp": -48.42284859782368
+    },
+    {
+      "country": "aus",
+      "metric": "environment_score_normalized",
+      "ppo": 0.09813511986269227,
+      "milp": 0.19026859218625136,
+      "ppo_minus_milp": -0.09213347232355909,
+      "ppo_over_milp": 0.5157715140217631,
+      "percent_change_ppo_vs_milp": -48.42284859782369
+    },
+    {
+      "country": "aus",
+      "metric": "environment_score_per_moved_animal",
+      "ppo": 2.3079660908981507,
+      "milp": 2.588336552607713,
+      "ppo_minus_milp": -0.28037046170956215,
+      "ppo_over_milp": 0.8916792866727116,
+      "percent_change_ppo_vs_milp": -10.832071332728846
+    },
+    {
+      "country": "aus",
+      "metric": "n_resolved_per_moved_animal_kg",
+      "ppo": 18.15515140163866,
+      "milp": 10.883825318379435,
+      "ppo_minus_milp": 7.271326083259224,
+      "ppo_over_milp": 1.6680855186990358,
+      "percent_change_ppo_vs_milp": 66.80855186990358
+    },
+    {
+      "country": "aus",
+      "metric": "nonzero_routes",
+      "ppo": 1124,
+      "milp": 1977,
+      "ppo_minus_milp": -853,
+      "ppo_over_milp": 0.5685381891755185,
+      "percent_change_ppo_vs_milp": -43.14618108244815
+    },
+    {
+      "country": "aus",
+      "metric": "pm25_reward",
+      "ppo": 18011211.0,
+      "milp": 58601607.0,
+      "ppo_minus_milp": -40590396.0,
+      "ppo_over_milp": 0.3073501209616999,
+      "percent_change_ppo_vs_milp": -69.26498790383
+    },
+    {
+      "country": "aus",
+      "metric": "reference_removal_fraction_mean",
+      "ppo": 0.6672057726555349,
+      "milp": 0.6840935014669144,
+      "ppo_minus_milp": -0.016887728811379454,
+      "ppo_over_milp": 0.9753137125624395,
+      "percent_change_ppo_vs_milp": -2.4686287437560486
+    },
+    {
+      "country": "aus",
+      "metric": "sensitivity_reward",
+      "ppo": 57207074.0,
+      "milp": 99075188.0,
+      "ppo_minus_milp": -41868114.0,
+      "ppo_over_milp": 0.5774107034750214,
+      "percent_change_ppo_vs_milp": -42.258929652497855
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_90pct_target_rate",
+      "ppo": 0.9161793372319688,
+      "milp": 0.9376218323586745,
+      "ppo_minus_milp": -0.021442495126705707,
+      "ppo_over_milp": 0.9771309771309771,
+      "percent_change_ppo_vs_milp": -2.2869022869022926
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_max_overshoot_kg",
+      "ppo": 0.9949488346464932,
+      "milp": 0.0,
+      "ppo_minus_milp": 0.9949488346464932,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_remaining_kg",
+      "ppo": 42470578.55968344,
+      "milp": 4538845.992665091,
+      "ppo_minus_milp": 37931732.56701835,
+      "ppo_over_milp": 9.357131444494295,
+      "percent_change_ppo_vs_milp": 835.7131444494295
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_resolved_kg",
+      "ppo": 1041697471.874793,
+      "milp": 1079629204.4418116,
+      "ppo_minus_milp": -37931732.56701851,
+      "ppo_over_milp": 0.9648659628593227,
+      "percent_change_ppo_vs_milp": -3.5134037140677314
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_resolved_ratio",
+      "ppo": 0.9608265724647914,
+      "milp": 0.9958135217221668,
+      "ppo_minus_milp": -0.03498694925737533,
+      "ppo_over_milp": 0.9648659628593227,
+      "percent_change_ppo_vs_milp": -3.5134037140677363
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_scale_tolerance_violations",
+      "ppo": 55,
+      "milp": 0,
+      "ppo_minus_milp": 55,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_strict_negative_rows",
+      "ppo": 151,
+      "milp": 0,
+      "ppo_minus_milp": 151,
+      "ppo_over_milp": null,
+      "percent_change_ppo_vs_milp": null
+    },
+    {
+      "country": "aus",
+      "metric": "source_n_total_kg",
+      "ppo": 1084168050.4344764,
+      "milp": 1084168050.4344764,
+      "ppo_minus_milp": 0.0,
+      "ppo_over_milp": 1.0,
+      "percent_change_ppo_vs_milp": 0.0
+    },
+    {
+      "country": "aus",
+      "metric": "source_share_l1_change_max",
+      "ppo": 1.9982672838436595,
+      "milp": 0.8313950666206554,
+      "ppo_minus_milp": 1.1668722172230042,
+      "ppo_over_milp": 2.403511115318439,
+      "percent_change_ppo_vs_milp": 140.3511115318439
+    },
+    {
+      "country": "aus",
+      "metric": "source_share_l1_change_mean",
+      "ppo": 0.2380051770324003,
+      "milp": 0.0067488710502024325,
+      "ppo_minus_milp": 0.23125630598219785,
+      "ppo_over_milp": 35.2659245171474,
+      "percent_change_ppo_vs_milp": 3426.59245171474
+    },
+    {
+      "country": "aus",
+      "metric": "source_structure_loss_max",
+      "ppo": 0.5,
+      "milp": 0.25,
+      "ppo_minus_milp": 0.25,
+      "ppo_over_milp": 2.0,
+      "percent_change_ppo_vs_milp": 100.0
+    },
+    {
+      "country": "aus",
+      "metric": "source_structure_loss_normalized",
+      "ppo": 0.12480104390339368,
+      "milp": 0.007875472028963684,
+      "ppo_minus_milp": 0.11692557187442999,
+      "ppo_over_milp": 15.846801746538103,
+      "percent_change_ppo_vs_milp": 1484.6801746538101
+    },
+    {
+      "country": "aus",
+      "metric": "sources_fully_depleted",
+      "ppo": 61,
+      "milp": 56,
+      "ppo_minus_milp": 5,
+      "ppo_over_milp": 1.0892857142857142,
+      "percent_change_ppo_vs_milp": 8.928571428571429
+    },
+    {
+      "country": "aus",
+      "metric": "sources_remaining_below_10pct",
+      "ppo": 145,
+      "milp": 155,
+      "ppo_minus_milp": -10,
+      "ppo_over_milp": 0.9354838709677419,
+      "percent_change_ppo_vs_milp": -6.451612903225806
+    },
+    {
+      "country": "aus",
+      "metric": "total_moved",
+      "ppo": 57377515,
+      "milp": 99195749,
+      "ppo_minus_milp": -41818234,
+      "ppo_over_milp": 0.5784271561879128,
+      "percent_change_ppo_vs_milp": -42.15728438120871
+    },
+    {
+      "country": "aus",
+      "metric": "weighted_objective_4_2_1_posthoc",
+      "ppo": 3.6918393219150705,
+      "milp": 4.157771735016991,
+      "ppo_minus_milp": -0.46593241310192024,
+      "ppo_over_milp": 0.8879369905813225,
+      "percent_change_ppo_vs_milp": -11.206300941867754
     }
   ]
 }
