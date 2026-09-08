@@ -89,7 +89,7 @@ experiments:
 outer_loop:
   cycle: 2
   last_direction: "DEEPEN"
-  last_reflection: "The unified normalized 4:2:1 objective is certified on EU, Australia, and USA. China remains an explicitly aborted uncertified attempt. USA reached its 0.1% certificate after 21.3 solver hours and independent validation passed; Brazil is now running the frozen formulation."
+  last_reflection: "The unified normalized 4:2:1 objective is certified on EU, Australia, and USA. The first China attempt was not evidence of infeasibility: it lacked an explicit nonzero start and stalled with root-LP numerical trouble. A newly authorized no-time-limit China restart now has a solver-accepted positive full warm start; Brazil continues independently."
 
 workspace:
   findings: "findings.md"

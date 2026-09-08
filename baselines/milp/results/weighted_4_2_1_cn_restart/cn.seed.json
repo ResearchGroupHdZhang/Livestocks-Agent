@@ -1,0 +1,22 @@
+{
+  "source_index": 38,
+  "destination_index": 212,
+  "species_index": 3,
+  "amount": 84030010,
+  "source_removal_rate": 1.0,
+  "source_reference_rate": 0.0,
+  "source_kind_count": 6,
+  "source_n_resolved_kg": 38588936.2395431,
+  "source_n_normalized": 0.00864625323211335,
+  "source_structure_loss_normalized": 0.00012484394506866417,
+  "environment_score": 252090030.0,
+  "environment_normalized": 0.007119165869765256,
+  "weighted_objective": 0.04145449090808133,
+  "source_n_residual_kg": 51935456.807817094,
+  "destination_n_residual_kg": 2339193.5208501816,
+  "destination_ammonia_residual_kg": 5413402.541514564,
+  "country": "cn",
+  "dataset": "中国国家尺度更新PB第一步.xlsx",
+  "construction": "deterministic_best_positive_one_route",
+  "build_elapsed_seconds": 399.56123081804253
+}
