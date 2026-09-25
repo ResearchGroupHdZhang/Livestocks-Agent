@@ -9,8 +9,8 @@ def main():
     country = 'cn'
     config = LivestockEnvConfig(
         country,
-        Reward_priority=[4, 4, 3, 2, 1],
-        thresholds=[0, 31, 0],
+        Reward_priority=[4, 2, 1],
+        thresholds=[0, 0],
         mobility_ratio=0.25,
         max_steps=8000,
         df_path='中国优化N优先v2.xlsx',

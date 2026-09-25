@@ -21,6 +21,11 @@ class LivestockEnvConfig:
                 province=None,
                 mobility_ratio=0.25,
                 max_steps=5000):
+        if len(Reward_priority) != 3:
+            raise ValueError(
+                "Reward_priority must contain exactly three weights: "
+                "[NH3, sensitivity, PM2.5 correlation]"
+            )
         self.country = country
         self.mobility_ratio = mobility_ratio
         self.Reward_priority = Reward_priority

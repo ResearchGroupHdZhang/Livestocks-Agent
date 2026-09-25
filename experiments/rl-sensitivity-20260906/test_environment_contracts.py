@@ -22,6 +22,11 @@ def _write_input(path: Path, incoming_n: float = -0.5) -> None:
         pd.DataFrame([{**row, "最优氮需求": incoming_n}]).to_excel(writer, sheet_name="移入", index=False)
 
 
+def test_reward_priority_requires_exactly_three_documented_components():
+    with pytest.raises(ValueError, match="exactly three"):
+        LivestockEnvConfig("cn", [4, 4, 3, 2, 1], [0, 0], "input.xlsx")
+
+
 def test_reset_observation_matches_declared_space(tmp_path):
     path = tmp_path / "tiny.xlsx"
     _write_input(path)
