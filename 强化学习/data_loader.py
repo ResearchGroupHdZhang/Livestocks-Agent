@@ -11,12 +11,13 @@ country_mapping = {
 }
 def load_datas(country, file_name="中国优化N优先v2.xlsx", province=None):
     country = country_mapping[country]
-    outgoing = pd.read_excel(os.path.join(os.path.dirname(__file__), f"../data/{country}/{file_name}"), sheet_name='移出')
-    incoming = pd.read_excel(os.path.join(os.path.dirname(__file__), f"../data/{country}/{file_name}"), sheet_name='移入')
+    path = file_name if os.path.isabs(file_name) else os.path.join(os.path.dirname(__file__), f"../data/{country}/{file_name}")
+    outgoing = pd.read_excel(path, sheet_name='移出')
+    incoming = pd.read_excel(path, sheet_name='移入')
     incoming.fillna(0, inplace=True)
     outgoing.fillna(0, inplace=True)
 
-    if province:
+    if province is not None:
         outgoing = outgoing.loc[outgoing['province'] == province]
         incoming = incoming.loc[incoming['province'] == province]
         

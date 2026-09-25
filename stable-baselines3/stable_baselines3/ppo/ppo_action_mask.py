@@ -6,7 +6,7 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-from stable_baselines3.common.buffers import RolloutBuffer
+from stable_baselines3.common.buffers import DictRolloutBuffer, RolloutBuffer
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, MultiInputActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
@@ -107,6 +107,9 @@ class PPO_action_mask(OnPolicyAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
     ):
+        rollout_buffer_kwargs = dict(rollout_buffer_kwargs or {})
+        if rollout_buffer_class in (None, RolloutBuffer, DictRolloutBuffer):
+            rollout_buffer_kwargs["store_action_masks"] = True
         super().__init__(
             policy,
             env,
@@ -128,12 +131,7 @@ class PPO_action_mask(OnPolicyAlgorithm):
             device=device,
             seed=seed,
             _init_setup_model=False,
-            supported_action_spaces=(
-                spaces.Box,
-                spaces.Discrete,
-                spaces.MultiDiscrete,
-                spaces.MultiBinary,
-            ),
+            supported_action_spaces=(spaces.Discrete,),
         )
 
         # Sanity check, otherwise it will lead to noisy gradient and NaN
@@ -173,6 +171,8 @@ class PPO_action_mask(OnPolicyAlgorithm):
 
     def _setup_model(self) -> None:
         super()._setup_model()
+        if not getattr(self.rollout_buffer, "store_action_masks", False):
+            raise ValueError("Custom rollout buffers for masked PPO must store action masks")
 
         # Initialize schedules for policy/value clipping
         self.clip_range = get_schedule_fn(self.clip_range)
@@ -211,7 +211,9 @@ class PPO_action_mask(OnPolicyAlgorithm):
                     # Convert discrete action from float to long
                     actions = rollout_data.actions.long().flatten()
 
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy = self.policy.evaluate_actions(
+                    rollout_data.observations, actions, rollout_data.action_masks
+                )
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages

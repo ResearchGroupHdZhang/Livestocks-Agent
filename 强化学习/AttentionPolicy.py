@@ -38,8 +38,9 @@ class CustomAttentionExtractor(BaseFeaturesExtractor):
         self.layernorm_sensitivity_out = nn.LayerNorm(features_dim)
 
         # Transformer block
-        self.transformer_layer_in = nn.TransformerEncoderLayer(d_model=features_dim, nhead=4)
-        self.transformer_layer_out = nn.TransformerEncoderLayer(d_model=features_dim, nhead=4)
+        # PPO must replay the same distribution regardless of minibatch or mode.
+        self.transformer_layer_in = nn.TransformerEncoderLayer(d_model=features_dim, nhead=4, batch_first=True, dropout=0)
+        self.transformer_layer_out = nn.TransformerEncoderLayer(d_model=features_dim, nhead=4, batch_first=True, dropout=0)
 
         self.fusion_layer = nn.MultiheadAttention(embed_dim=features_dim, num_heads=4, batch_first=True)
         self.fc1 = nn.Linear(features_dim, features_dim)

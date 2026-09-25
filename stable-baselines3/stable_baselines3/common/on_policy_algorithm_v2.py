@@ -14,7 +14,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import obs_as_tensor, safe_mean
 from stable_baselines3.common.vec_env import VecEnv
-from 强化学习 import load_datas
+from 强化学习.data_loader import load_datas
 from scipy.optimize import linprog
 import copy
 
@@ -263,7 +263,14 @@ class OnPolicyAlgorithm(BaseAlgorithm):
     
     def detect_violation(self, move_out_idx, move_in_idx, amounts):
         cur_amounts_out = self.Move_out[move_out_idx, :]
-        Amounts_violation = (cur_amounts_out < amounts.cpu().numpy()).any()
+        amounts_np = amounts.cpu().numpy()
+        Amounts_violation = (
+            not np.isfinite(amounts_np).all()
+            or (amounts_np < 0).any()
+            or (amounts_np != np.floor(amounts_np)).any()
+            or (cur_amounts_out < amounts_np).any()
+            or ((self.Move_in_origin.iloc[move_in_idx, :].values == 0) & (amounts_np != 0)).any()
+        )
         Ammonia_violation = self.Move_in_tensor_Ammonia[move_in_idx] < self.thresholds[1] + amounts.double() @ self.Move_in_tensor_Coef_Ammonia[move_in_idx] -1e-2
         N_violation_out = self.Move_out_tensor_N_demand[move_out_idx] < self.thresholds[0] + amounts.double() @ self.Move_out_tensor_Coef_N_demand[move_out_idx] -1
         N_violation_in = self.Move_in_tensor_N_demand[move_in_idx] > self.thresholds[0] - amounts.double() @ self.Move_in_tensor_Coef_N_demand[move_in_idx] +1e-2
@@ -294,7 +301,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         Move_in_amounts_original = self.Move_in_origin.iloc[move_in_idx, :].values
         Move_out_amounts_original = self.Move_out_origin.iloc[move_out_idx, :].values
         
-        bounds = [(0, min(amounts[i].item()+1, cur_amounts[i])) for i in range(len(cur_amounts))]
+        # The +1 proposal relaxation must not reopen absent destination species.
+        bounds = [(0, 0 if Move_in_amounts_original[i] == 0 else min(amounts[i].item()+1, cur_amounts[i])) for i in range(len(cur_amounts))]
         _, upbounds = zip(*bounds)
         if (np.array(upbounds) == 0).all():
             return th.zeros(self.action_len, dtype=th.int64).to(amounts.device)
@@ -323,8 +331,9 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         res = linprog(c, bounds=bounds, A_ub=A_ub, b_ub=b_ub, method='highs', integrality=1)
         if res.success:
             amounts = th.tensor(res.x, dtype=th.int64).to(amounts.device)
-
-        return amounts
+            if not any(self.detect_violation(move_out_idx, move_in_idx, amounts)):
+                return amounts
+        return th.zeros(self.action_len, dtype=th.int64).to(amounts.device)
         
     def collect_rollouts(
         self,
@@ -373,6 +382,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 # Convert to pytorch tensor or to TensorDict
                 obs_tensor = obs_as_tensor(self._last_obs, self.device)
                 # policy action
+                rollout_action_mask = self.action_mask.clone()
                 actions, values, log_probs = self.policy(obs_tensor, self.action_mask)
 
                 move_out_idx, move_in_idx = self.action_proj(actions[0])
@@ -382,14 +392,20 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
                 while True in violation and self.action_mask.sum() < self.action_mask_sum_origin and counter < 5000000:
                     self.update_action_mask(move_out_idx, move_in_idx, True)
-                    print(f"step:{n_steps}, mask_sum_ratio:{self.action_mask.sum()/self.action_mask_sum_origin:.4f} | amount:{amount}")
-                    
+                    if self.action_mask.all():
+                        # Exhaustion is a zero-transfer terminal transition, not a new draw.
+                        amount = th.zeros_like(amount)
+                        break
+                    rollout_action_mask = self.action_mask.clone()
                     actions, values, log_probs = self.policy(obs_tensor, self.action_mask)
 
                     move_out_idx, move_in_idx = self.action_proj(actions[0])
                     amount = self.amount_adapt(move_out_idx, move_in_idx)
                     violation = self.detect_violation(move_out_idx, move_in_idx, amount)
                     counter += 1
+
+                if counter >= 5000000:
+                    raise RuntimeError("Feasible action search exceeded its safety budget")
 
             # Rescale and perform action
             if isinstance(actions, th.Tensor):
@@ -410,12 +426,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
             self.update_action_mask(move_out_idx, move_in_idx, False)
 
-            if counter >= 5000000:
-                env.unwrapped.envs[0].env.env.env.action_mask_left = 0
-            else:
-                env.unwrapped.envs[0].env.env.env.action_mask_left = self.action_mask_sum_origin - self.action_mask.sum()
-            
-            self.env.unwrapped.envs[0].env.env.env.move_amount = amount
+            env.unwrapped.envs[0].unwrapped.action_mask_left = int(self.action_mask_sum_origin - self.action_mask.sum())
+            self.env.unwrapped.envs[0].unwrapped.move_amount = amount
             new_obs, rewards, dones, infos = self.env.step(clipped_actions)
 
             self.num_timesteps += env.num_envs
@@ -427,7 +439,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
             self._update_info_buffer(infos, dones)
             n_steps += 1
-            print(f"n_steps: {n_steps} || mask_sum_ratio:{self.action_mask.sum()/self.action_mask_sum_origin} || actions: {actions} || rewards: {rewards} || dones: {dones} || infos: {infos}")
+            if self.verbose >= 2:
+                print(f"n_steps: {n_steps} || actions: {actions} || rewards: {rewards} || dones: {dones}")
             if isinstance(self.action_space, spaces.Discrete):
                 # Reshape in case of discrete action
                 actions = actions.reshape(-1, 1)
@@ -456,7 +469,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                     self.Move_out_tensor_Ammonia = self.Move_out_tensor_Ammonia_origin.clone()
 
                     self.update_action_mask()
-                    self.env.unwrapped.envs[0].env.env.env.action_mask_left  = self.action_mask_sum_origin
+                    self.env.unwrapped.envs[0].unwrapped.action_mask_left = int(self.action_mask_sum_origin - self.action_mask.sum())
                     
 
             rollout_buffer.add(
@@ -466,6 +479,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 self._last_episode_starts,  # type: ignore[arg-type]
                 values,
                 log_probs,
+                **({"action_mask": rollout_action_mask} if getattr(rollout_buffer, "store_action_masks", False) else {}),
             )
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones

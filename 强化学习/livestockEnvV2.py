@@ -10,8 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 np.random.seed(0) # 为了保证每次运行结果一致，设置随机种子
 import torch
 from scipy.optimize import linprog
-# from data_loader import load_datas, country_mapping
-from data_loader import load_datas, country_mapping
+from 强化学习.data_loader import load_datas, country_mapping
 import copy
 
 class LivestockEnvConfig:
@@ -84,10 +83,10 @@ class LivestockEnv(gym.Env):
         self.observation_space = spaces.Dict({
             'Amount_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, self.Move_in_origin.shape[1]), dtype=np.int64),
             'Amount_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, self.Move_out_origin.shape[1]), dtype=np.int64),
-            'N_demand_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
-            'N_demand_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
-            'Ammonia_Move_in': spaces.Box(low=0, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
-            'Ammonia_Move_out': spaces.Box(low=0, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
+            'N_demand_Move_in': spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
+            'N_demand_Move_out': spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
+            'Ammonia_Move_in': spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_move_in_counties, 1), dtype=np.float64),
+            'Ammonia_Move_out': spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_move_out_counties, 1), dtype=np.float64),
             'sensitivity_Move_in': spaces.Box(low=0, high=1, shape=(self.num_move_in_counties, 1), dtype=np.float64),
             'sensitivity_Move_out': spaces.Box(low=0, high=1, shape=(self.num_move_out_counties, 1), dtype=np.float64),
             'relative_pm25_Move_in': spaces.Box(low=0, high=1, shape=(self.num_move_in_counties, 1), dtype=np.float64),
@@ -123,11 +122,24 @@ class LivestockEnv(gym.Env):
         self.state['Ammonia_Move_out'][move_out_idx] -= (amounts.double() @ self.Move_out_tensor_Coef_Ammonia[move_out_idx, :]).item()
         return self.state
     
-    def detect_violation(self, move_out_idx, move_in_idx):
-        
-        # 移入和移出地区的牲畜数量是否小于0
-        Amounts_violation = (self.state['Amount_Move_out'][move_out_idx] < 0).any() or (self.state['Amount_Move_in'][move_in_idx] < 0).any()
-        return Amounts_violation
+    def detect_violation(self, move_out_idx, move_in_idx, amounts=None):
+        if amounts is None:
+            return ((self.state['Amount_Move_out'][move_out_idx] < 0).any()
+                    or (self.state['Amount_Move_in'][move_in_idx] < 0).any())
+        amounts_np = amounts.detach().cpu().numpy()
+        return bool(
+            not np.isfinite(amounts_np).all()
+            or (amounts_np < 0).any()
+            or (amounts_np != np.floor(amounts_np)).any()
+            or (amounts_np > self.state['Amount_Move_out'][move_out_idx]).any()
+            or ((self.Move_in_origin[move_in_idx] == 0) & (amounts_np != 0)).any()
+            or self.state['Ammonia_Move_in'][move_in_idx]
+            < self.thresholds[1] + (amounts.double() @ self.Move_in_tensor_Coef_Ammonia[move_in_idx]).item() - 1e-2
+            or self.state['N_demand_Move_out'][move_out_idx]
+            < self.thresholds[0] + (amounts.double() @ self.Move_out_tensor_Coef_N_demand[move_out_idx]).item() - 1
+            or self.state['N_demand_Move_in'][move_in_idx]
+            > self.thresholds[0] - (amounts.double() @ self.Move_in_tensor_Coef_N_demand[move_in_idx]).item() + 1e-2
+        )
     
     def get_total_reward(self, move_in_index, move_out_index):
         """计算移入和移出县的奖励，并确保全局达标。"""
@@ -185,12 +197,16 @@ class LivestockEnv(gym.Env):
         move_out_idx = action // self.Move_in.shape[0]
         move_in_idx = action % self.Move_in.shape[0]
         
-        amounts = self.move_amount
-
-        if amounts is None:
+        if self.move_amount is None:
             raise ValueError("Amounts is None")
+        amounts = self.move_amount.to(self.device)
+        self.move_amount = amounts
 
-        reward = self.get_total_reward(move_in_idx, move_out_idx)
+        if amounts.any() and self.detect_violation(move_out_idx, move_in_idx, amounts):
+            raise ValueError("Infeasible transfer rejected before state mutation")
+
+        # A final rejected route may end the episode, but cannot earn transfer reward.
+        reward = self.get_total_reward(move_in_idx, move_out_idx) if amounts.any() else 0.0
                     
         self.state = self.update_state(move_in_idx, move_out_idx, amounts)
         self.current_step += 1
@@ -199,8 +215,8 @@ class LivestockEnv(gym.Env):
         # amounts_violation = self.detect_violation(move_out_idx, move_in_idx)
         
         # final_terminated = self.check_termination_condition()
-        terminated = self.action_mask_left==0 or self.current_step >= self.max_steps     
-        truncated = False
+        terminated = self.action_mask_left == 0
+        truncated = self.current_step >= self.max_steps and not terminated
 
         # if amounts_violation:
         #     reward -= -10
@@ -221,6 +237,7 @@ class LivestockEnv(gym.Env):
 
         self.move_amount = None
         self.current_step = 0
+        self.action_mask_left = None
 
         self.Move_in = self.Move_in_origin.copy()
         self.Move_out = self.Move_out_origin.copy()

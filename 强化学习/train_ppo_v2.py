@@ -19,9 +19,9 @@ register(
     entry_point='livestockEnvV2:LivestockEnv',
 )
 country = 'eu'
-config = LivestockEnvConfig(country, 
-                            Reward_priority=[4, 2, 1], 
-                            thresholds=[0, 0], 
+config = LivestockEnvConfig(country,
+                            Reward_priority=[4, 2, 1],
+                            thresholds=[0, 0],
                             mobility_ratio=0.02,
                             max_steps=50000,
                             df_path='欧盟更新PB后第一步.xlsx')
@@ -29,7 +29,9 @@ config = LivestockEnvConfig(country,
 version = 'v10'
 env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
 env = VecCheckNan(env, raise_exception=True)
-eval_callback = EvalCallback(env, best_model_save_path=f'../logs/{version}/{country}/',
+eval_env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+eval_env = VecCheckNan(eval_env, raise_exception=True)
+eval_callback = EvalCallback(eval_env, best_model_save_path=f'../logs/{version}/{country}/',
                              log_path='./logs/', eval_freq=2**15+1,
                              deterministic=False, render=False)
 from typing import Callable
@@ -52,10 +54,10 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
         return progress_remaining * initial_value
 
     return func
-model = PPO_action_mask_v2(CustomAttentionPolicy, 
-                        env, 
-                        batch_size=256, 
-                        verbose=1, 
+model = PPO_action_mask_v2(CustomAttentionPolicy,
+                        env,
+                        batch_size=256,
+                        verbose=1,
                         tensorboard_log='./board/',
                         seed=42,
                         kwargs={'country':country},
@@ -63,4 +65,3 @@ model = PPO_action_mask_v2(CustomAttentionPolicy,
                         n_steps=2**15,
                         )
 model.learn(total_timesteps=200000,tb_log_name = f"{country}PPO_{version}",callback=eval_callback)
-

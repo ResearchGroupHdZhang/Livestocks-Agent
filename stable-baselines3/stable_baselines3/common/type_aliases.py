@@ -35,6 +35,7 @@ class RolloutBufferSamples(NamedTuple):
     old_log_prob: th.Tensor
     advantages: th.Tensor
     returns: th.Tensor
+    action_masks: Optional[th.Tensor] = None
 
 
 class DictRolloutBufferSamples(NamedTuple):
@@ -44,6 +45,7 @@ class DictRolloutBufferSamples(NamedTuple):
     old_log_prob: th.Tensor
     advantages: th.Tensor
     returns: th.Tensor
+    action_masks: Optional[th.Tensor] = None
 
 
 class ReplayBufferSamples(NamedTuple):

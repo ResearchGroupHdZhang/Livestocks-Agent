@@ -49,9 +49,9 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 for province in df_out['province'].unique():
     try:
         print("-------------------",province,"-------------------")
-        config = LivestockEnvConfig(country, 
-                                    Reward_priority=[4, 2, 1], 
-                                    thresholds=[0, 0], 
+        config = LivestockEnvConfig(country,
+                                    Reward_priority=[4, 2, 1],
+                                    thresholds=[0, 0],
                                     mobility_ratio=0.1,
                                     max_steps=30000,
                                     df_path=FilePath,
@@ -60,14 +60,16 @@ for province in df_out['province'].unique():
         # 创建并包装环境
         env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
         env = VecCheckNan(env, raise_exception=True)
-        eval_callback = EvalCallback(env, best_model_save_path=f'../logs/{version}/{country}/{province}',
+        eval_env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+        eval_env = VecCheckNan(eval_env, raise_exception=True)
+        eval_callback = EvalCallback(eval_env, best_model_save_path=f'../logs/{version}/{country}/{province}',
                                     log_path='../logs/', eval_freq=2**13+1,
                                     deterministic=False, render=False)
 
-        model = PPO_action_mask_v2(CustomAttentionPolicy, 
-                                env, 
-                                batch_size=512, 
-                                verbose=1, 
+        model = PPO_action_mask_v2(CustomAttentionPolicy,
+                                env,
+                                batch_size=512,
+                                verbose=1,
                                 tensorboard_log='./board/',
                                 seed=42,
                                 kwargs={'country':country},
@@ -79,4 +81,4 @@ for province in df_out['province'].unique():
     except Exception as e:
         print("-------------------",province,"failed-------------------")
         print(e)
-    # break  
+    # break

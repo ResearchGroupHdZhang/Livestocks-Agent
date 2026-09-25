@@ -170,7 +170,14 @@ def evaluate_policy(
     def detect_violation(move_out_idx, move_in_idx, amounts):
 
         cur_amounts_out = Move_out[move_out_idx, :]
-        Amounts_violation = (cur_amounts_out < amounts.cpu().numpy()).any()
+        amounts_np = amounts.cpu().numpy()
+        Amounts_violation = (
+            not np.isfinite(amounts_np).all()
+            or (amounts_np < 0).any()
+            or (amounts_np != np.floor(amounts_np)).any()
+            or (cur_amounts_out < amounts_np).any()
+            or ((model.Move_in_origin.iloc[move_in_idx, :].values == 0) & (amounts_np != 0)).any()
+        )
         empty_violation = (amounts == 0).all()
         Ammonia_violation = Move_in_tensor_Ammonia[move_in_idx] < model.thresholds[1] + amounts.double() @ model.Move_in_tensor_Coef_Ammonia[move_in_idx] - 1e-2
         N_violation_out = Move_out_tensor_N_demand[move_out_idx] < model.thresholds[0] + amounts.double() @ model.Move_out_tensor_Coef_N_demand[move_out_idx] - 1
@@ -206,7 +213,8 @@ def evaluate_policy(
         Move_in_amounts_original = model.Move_in_origin.iloc[move_in_idx, :].values
         Move_out_amounts_original = model.Move_out_origin.iloc[move_out_idx, :].values
 
-        bounds = [(0, min(amounts[i].item()+1, cur_amounts[i])) for i in range(len(cur_amounts))]
+        # The +1 proposal relaxation must not reopen absent destination species.
+        bounds = [(0, 0 if Move_in_amounts_original[i] == 0 else min(amounts[i].item()+1, cur_amounts[i])) for i in range(len(cur_amounts))]
         _, upbounds = zip(*bounds)
         if (np.array(upbounds) == 0).all():
             return torch.zeros(model.action_len, dtype=torch.int64).to(amounts.device)
@@ -238,8 +246,9 @@ def evaluate_policy(
 
         if res.success:
             amounts = torch.tensor(res.x, dtype=torch.int64).to(amounts.device)
-        
-        return amounts
+            if not any(detect_violation(move_out_idx, move_in_idx, amounts)):
+                return amounts
+        return torch.zeros(model.action_len, dtype=torch.int64).to(amounts.device)
 
     episode_starts = np.ones((env.num_envs,), dtype=bool)
     update_action_mask()
@@ -259,6 +268,9 @@ def evaluate_policy(
 
             while True in violation and action_mask.sum() < num_move_in_counties* num_move_out_counties and counter < 500000: # if available amounts search round > 500, break
                 update_action_mask(move_out_idx, move_in_idx, True)  # 更新 action_mask
+                if action_mask.all():
+                    amount = torch.zeros_like(amount)
+                    break
                 pbar.set_postfix({"reward":-1, "mask":action_mask.sum()})
                 actions, states = model.predict(
                     observations,  # type: ignore[arg-type]
@@ -276,10 +288,9 @@ def evaluate_policy(
             update_Move_df(move_out_idx, move_in_idx, amount)  # 更新 Move_in 和 Move_out
             update_action_mask(move_out_idx, move_in_idx, False)  # 更新 action_mask
             if counter >= 500000:
-                env.unwrapped.envs[0].env.env.env.action_mask_left = 0
-            else:
-                env.unwrapped.envs[0].env.env.env.action_mask_left = model.action_mask_sum_origin - action_mask.sum()
-            env.unwrapped.envs[0].env.env.env.move_amount = amount
+                raise RuntimeError("Feasible action search exceeded its safety budget")
+            env.unwrapped.envs[0].unwrapped.action_mask_left = int(model.action_mask_sum_origin - action_mask.sum())
+            env.unwrapped.envs[0].unwrapped.move_amount = amount
             
             new_observations, rewards, dones, infos = env.step(actions)
             
@@ -328,7 +339,7 @@ def evaluate_policy(
                             Move_out_tensor_Ammonia = model.Move_out_tensor_Ammonia_origin.clone()
 
                             update_action_mask()
-                            env.unwrapped.envs[0].env.env.env.action_mask_left  = model.action_mask_sum_origin - action_mask.sum()
+                            env.unwrapped.envs[0].unwrapped.action_mask_left = int(model.action_mask_sum_origin - action_mask.sum())
                             
                         else:
                             episode_rewards.append(current_rewards[i])
