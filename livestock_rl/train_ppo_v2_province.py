@@ -1,32 +1,24 @@
 import os
-import sys
-sys.path.append("../stable-baselines3")
-sys.path.append("..")
-from torch.nn.modules.activation import F
+from pathlib import Path
+from typing import Callable
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "4"
-import gymnasium as gym
-from logger import setup_logger
-from livestockEnvV2 import load_datas,LivestockEnvConfig
+
+import pandas as pd
 from stable_baselines3 import PPO_action_mask_v2
 from stable_baselines3.common.env_util import make_vec_env
-from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import EvalCallback
-from stable_baselines3.common.vec_env import DummyVecEnv, VecCheckNan
-from AttentionPolicy import CustomAttentionPolicy
-from data_loader import country_mapping
-import pandas as pd
+from stable_baselines3.common.vec_env import VecCheckNan
+from livestock_rl import LivestockEnv, LivestockEnvConfig
+from livestock_rl.AttentionPolicy import CustomAttentionPolicy
+from livestock_rl.data_loader import country_mapping
 
-register(
-    id='LivestockEnv-v2',
-    entry_point='livestockEnvV2:LivestockEnv',
-)
 country = 'usa'
 FilePath = '美国数据分省尺度第二步1224.xlsx'
 version = 'v9-2'
 
 # 加载数据
-df_out = pd.read_excel(f'../data/{country_mapping[country]}/{FilePath}', sheet_name='移出')
-from typing import Callable
+df_out = pd.read_excel(Path(__file__).resolve().parents[1] / 'data' / country_mapping[country] / FilePath, sheet_name='移出')
 
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
@@ -58,9 +50,9 @@ for province in df_out['province'].unique():
                                     province=province,)
 
         # 创建并包装环境
-        env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+        env = make_vec_env(lambda: LivestockEnv(config), n_envs=1)
         env = VecCheckNan(env, raise_exception=True)
-        eval_env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+        eval_env = make_vec_env(lambda: LivestockEnv(config), n_envs=1)
         eval_env = VecCheckNan(eval_env, raise_exception=True)
         eval_callback = EvalCallback(eval_env, best_model_save_path=f'../logs/{version}/{country}/{province}',
                                     log_path='../logs/', eval_freq=2**13+1,

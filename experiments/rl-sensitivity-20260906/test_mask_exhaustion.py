@@ -7,7 +7,7 @@ from stable_baselines3 import PPO_action_mask_v2
 from stable_baselines3.common.distributions import CategoricalDistribution
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation_action_mask_v2 import evaluate_policy
-from 强化学习 import LivestockEnv, LivestockEnvConfig
+from livestock_rl import LivestockEnv, LivestockEnvConfig
 
 
 def test_all_masked_distribution_is_not_uniform():

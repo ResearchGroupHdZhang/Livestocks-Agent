@@ -16,7 +16,7 @@ import numpy as np
 import torch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from 强化学习.AttentionPolicy import CustomAttentionExtractor
+from livestock_rl.AttentionPolicy import CustomAttentionExtractor
 
 INPUTS = ROOT / "experiments/rl-frozen-generalization/inputs"
 CHECKPOINT = ROOT / "logs/v8/aus/best_model.zip"

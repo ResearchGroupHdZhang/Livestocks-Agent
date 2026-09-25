@@ -1,9 +1,9 @@
-"""Run with PYTHONPATH=.:强化学习 .venv/bin/python -m pytest <this file>."""
+"""Run with PYTHONPATH=.:livestock_rl .venv/bin/python -m pytest <this file>."""
 import numpy as np
 import torch
 from gymnasium import spaces
 
-from 强化学习.AttentionPolicy import CustomAttentionPolicy
+from livestock_rl.AttentionPolicy import CustomAttentionPolicy
 
 
 def test_rollout_update_log_probs_are_batch_and_mode_invariant():

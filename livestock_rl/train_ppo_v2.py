@@ -1,23 +1,15 @@
 import os
-import sys
-sys.path.append("../stable-baselines3")
-sys.path.append("..")
-from torch.nn.modules.activation import F
+from typing import Callable
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-import gymnasium as gym
-from logger import setup_logger
-from livestockEnvV2 import load_datas,LivestockEnvConfig
+
 from stable_baselines3 import PPO_action_mask_v2
 from stable_baselines3.common.env_util import make_vec_env
-from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import EvalCallback
-from stable_baselines3.common.vec_env import DummyVecEnv, VecCheckNan
-from AttentionPolicy import CustomAttentionPolicy
+from stable_baselines3.common.vec_env import VecCheckNan
+from livestock_rl import LivestockEnv, LivestockEnvConfig
+from livestock_rl.AttentionPolicy import CustomAttentionPolicy
 
-register(
-    id='LivestockEnv-v2',
-    entry_point='livestockEnvV2:LivestockEnv',
-)
 country = 'eu'
 config = LivestockEnvConfig(country,
                             Reward_priority=[4, 2, 1],
@@ -27,15 +19,13 @@ config = LivestockEnvConfig(country,
                             df_path='欧盟更新PB后第一步.xlsx')
 
 version = 'v10'
-env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+env = make_vec_env(lambda: LivestockEnv(config), n_envs=1)
 env = VecCheckNan(env, raise_exception=True)
-eval_env = make_vec_env('LivestockEnv-v2', n_envs=1, env_kwargs={'config': config})
+eval_env = make_vec_env(lambda: LivestockEnv(config), n_envs=1)
 eval_env = VecCheckNan(eval_env, raise_exception=True)
 eval_callback = EvalCallback(eval_env, best_model_save_path=f'../logs/{version}/{country}/',
                              log_path='./logs/', eval_freq=2**15+1,
                              deterministic=False, render=False)
-from typing import Callable
-
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
     Linear learning rate schedule.

@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 np.random.seed(0) # 为了保证每次运行结果一致，设置随机种子
 import torch
 from scipy.optimize import linprog
-from 强化学习.data_loader import load_datas, country_mapping
+from livestock_rl.data_loader import load_datas, country_mapping
 import copy
 
 class LivestockEnvConfig:

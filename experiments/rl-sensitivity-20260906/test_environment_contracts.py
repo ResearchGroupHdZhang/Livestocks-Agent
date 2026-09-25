@@ -7,7 +7,7 @@ import torch
 
 from stable_baselines3 import PPO_action_mask_v2
 from stable_baselines3.common.env_util import make_vec_env
-from 强化学习 import LivestockEnv, LivestockEnvConfig
+from livestock_rl import LivestockEnv, LivestockEnvConfig
 
 
 def _write_input(path: Path, incoming_n: float = -0.5) -> None:
@@ -69,15 +69,15 @@ def test_failed_or_invalid_quantity_solve_returns_zero(tmp_path, monkeypatch, re
 
 @pytest.mark.parametrize("script", ["train_ppo_v2.py", "train_ppo_v2_province.py"])
 def test_training_script_uses_an_independent_evaluation_env(script):
-    source = (Path(__file__).parents[2] / "强化学习" / script).read_text(encoding="utf-8")
+    source = (Path(__file__).parents[2] / "livestock_rl" / script).read_text(encoding="utf-8")
     assert "eval_env = make_vec_env" in source
     assert "EvalCallback(eval_env," in source
 
 
 def test_evaluation_config_supplies_the_required_input_path():
-    source = (Path(__file__).parents[2] / "强化学习" / "evaluation_ppo.py").read_text(encoding="utf-8")
+    source = (Path(__file__).parents[2] / "livestock_rl" / "evaluation_ppo.py").read_text(encoding="utf-8")
     assert "df_path=" in source
 
 
 def test_evaluation_entrypoint_is_import_safe():
-    import 强化学习.evaluation_ppo  # noqa: F401
+    import livestock_rl.evaluation_ppo  # noqa: F401
