@@ -1,0 +1,47 @@
+# OS and editor files
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/
+*~
+
+# Python environments and caches
+.python-version
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+*.lic
+
+# Agent and private research state
+.hermes/
+.history/
+knowledge/
+findings.md
+research-log.md
+research-state.yaml
+
+# Runtime artifacts
+log/
+logs/
+board/
+runs/
+wandb/
+swanlog/
+checkpoints/
+*.log
+
+# Generated experiment status and interrupted runs
+**/current-run.json
+**/current-status.json
+**/interrupted_attempts/
