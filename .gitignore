@@ -31,6 +31,10 @@ findings.md
 research-log.md
 research-state.yaml
 
+# Internal experiments and baselines are not part of this public branch
+experiments/
+baselines/
+
 # Runtime artifacts
 log/
 logs/
