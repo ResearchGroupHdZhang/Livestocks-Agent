@@ -1,0 +1,30 @@
+{
+  "country": "eu",
+  "scope": "national",
+  "input": "data/欧盟/欧盟第一次转移.xlsx",
+  "reward_weights": [
+    4,
+    2,
+    1
+  ],
+  "thresholds": [
+    0,
+    0
+  ],
+  "mobility_ratio": 0.02,
+  "max_steps": 50000,
+  "policy": "CustomAttentionPolicy",
+  "seed": 42,
+  "total_timesteps": 150000,
+  "n_steps": 8192,
+  "batch_size": 512,
+  "n_epochs": 10,
+  "learning_rate": {
+    "schedule": "exponential",
+    "initial": 0.001,
+    "final": 5e-07
+  },
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip_range": 0.2
+}
